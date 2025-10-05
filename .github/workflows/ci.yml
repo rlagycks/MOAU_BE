@@ -47,7 +47,7 @@ jobs:
           mysql --host=${{ env.CI_DB_HOST }} --port=${{ env.CI_DB_PORT }} --user=${{ env.CI_DB_USER }} --password=${{ env.CI_DB_PASSWORD }} --execute="SELECT 1"
 
       - name: Run tests
-        run: ./gradlew test
+        run: ./gradlew --no-daemon test
 
       - name: MySQL logs on failure
         if: failure()
