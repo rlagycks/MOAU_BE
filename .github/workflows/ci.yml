@@ -39,17 +39,10 @@ jobs:
           java-version: '21'
           cache: gradle
 
-      - name: Start MySQL via Compose
-        run: |
-          docker compose -f docker-compose.ci.yml up -d
-          for i in {1..60}; do
-            docker compose -f docker-compose.ci.yml exec -T mysql \
-              sh -lc "mysql -h 127.0.0.1 -u${CI_DB_USER} -p${CI_DB_PASSWORD} -e 'SELECT 1'" && break
-            sleep 2
-          done
-          docker compose -f docker-compose.ci.yml ps
+      - name: Start MySQL and wait for it to be healthy
+        run: docker compose -f docker-compose.ci.yml up --wait -d
 
-      - name: Build (no tests)
+      - name: Build (without tests)
         uses: gradle/gradle-build-action@v3
         with:
           arguments: build -x test
