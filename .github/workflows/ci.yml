@@ -24,9 +24,9 @@ jobs:
       CI_DB_HOST: 127.0.0.1
       CI_DB_PORT: 3307
       CI_DB_NAME: moau
-      CI_DB_USER: ${{ secrets.CI_DB_USER }}               # ex) moau
-      CI_DB_PASSWORD: ${{ secrets.CI_DB_PASSWORD }}       # ex) moau
-      CI_DB_ROOT_PASSWORD: ${{ secrets.CI_DB_ROOT_PASSWORD }}  # ex) root
+      CI_DB_USER: ${{ secrets.CI_DB_USER }}
+      CI_DB_PASSWORD: ${{ secrets.CI_DB_PASSWORD }}
+      CI_DB_ROOT_PASSWORD: ${{ secrets.CI_DB_ROOT_PASSWORD }}
 
     steps:
       - uses: actions/checkout@v4

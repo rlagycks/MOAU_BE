@@ -77,9 +77,6 @@ application-*.yml
 ######################################
 # 로컬 비밀 포함: 무조건 무시
 docker-compose.yml
-docker-compose.local.yml
-docker-compose.override.yml
-docker-compose.*.local.yml
 
 # 예외(커밋 허용): CI/예시
 !docker-compose.ci.yml
