@@ -6,5 +6,5 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     open-in-view: false
-    hibernate.ddl-auto: validate
+    hibernate.ddl-auto: create-drop
     properties.hibernate.jdbc.time_zone: UTC
