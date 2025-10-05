@@ -1,0 +1,23 @@
+# docker-compose.ci.yml
+name: moau-ci
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: moau-ci-mysql
+    ports: [ "3307:3306" ]
+    environment:
+      MYSQL_ROOT_PASSWORD: ${CI_DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: moau
+      MYSQL_USER: ${CI_DB_USER}
+      MYSQL_PASSWORD: ${CI_DB_PASSWORD}
+      TZ: UTC
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --explicit_defaults_for_timestamp=1
+      - --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD","mysqladmin","ping","-h","127.0.0.1","-u${CI_DB_USER}","-p${CI_DB_PASSWORD}"]
+      interval: 5s
+      timeout: 3s
+      retries: 30

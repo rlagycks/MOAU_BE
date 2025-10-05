@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: moau
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc.time_zone: UTC
+        format_sql: true
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${RDS_ENDPOINT}:3306/${RDS_DB}?sslMode=VERIFY_IDENTITY&enabledTLSProtocols=TLSv1.2,TLSv1.3&serverTimezone=UTC&characterEncoding=utf8mb4
+    username: ${RDS_USER}
+    password: ${RDS_PASS}
+
+security:
+  jwt:
+    secret: ${JWT_SECRET}
+
+cloud:
+  aws:
+    region:
+      static: ${AWS_REGION}
+    s3:
+      bucket: ${AWS_S3_BUCKET}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

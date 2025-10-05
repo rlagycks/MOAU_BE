@@ -1,0 +1,65 @@
+name: CI
+on:
+  pull_request: { branches: [ main, develop ] }
+  push:
+    branches:
+      - develop
+      - 'feat/**'
+      - 'fix/**'
+      - 'chore/**'
+      - 'refactor/**'
+      - 'docs/**'
+      - 'test/**'
+      - 'ci/**'
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      SPRING_PROFILES_ACTIVE: ci
+      CI_DB_HOST: 127.0.0.1
+      CI_DB_PORT: 3307
+      CI_DB_NAME: moau
+      CI_DB_USER: ${{ secrets.CI_DB_USER }}               # ex) moau
+      CI_DB_PASSWORD: ${{ secrets.CI_DB_PASSWORD }}       # ex) moau
+      CI_DB_ROOT_PASSWORD: ${{ secrets.CI_DB_ROOT_PASSWORD }}  # ex) root
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Start MySQL via Compose
+        run: |
+          docker compose -f docker-compose.ci.yml up -d
+          for i in {1..60}; do
+            docker compose -f docker-compose.ci.yml exec -T mysql \
+              sh -lc "mysqladmin ping -h 127.0.0.1 -u${CI_DB_USER} -p${CI_DB_PASSWORD}" && break
+            sleep 2
+          done
+          docker compose -f docker-compose.ci.yml ps
+
+      - name: Build (no tests)
+        uses: gradle/gradle-build-action@v3
+        with:
+          arguments: build -x test
+
+      - name: Run tests
+        run: ./gradlew test
+
+      - name: MySQL logs on failure
+        if: failure()
+        run: docker compose -f docker-compose.ci.yml logs --no-color mysql
+
+      - name: Down services
+        if: always()
+        run: docker compose -f docker-compose.ci.yml down -v
