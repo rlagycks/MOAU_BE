@@ -1,7 +1,7 @@
-package com.moau.moau.board;
+package com.moau.moau.board.domain;
 
 import com.moau.moau.global.domain.BaseId;
-import com.moau.moau.group.Group;
+import com.moau.moau.group.domain.Group;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

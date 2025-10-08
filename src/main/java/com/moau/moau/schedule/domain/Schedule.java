@@ -1,8 +1,8 @@
-package com.moau.moau.schedule;
+package com.moau.moau.schedule.domain;
 
 import com.moau.moau.global.domain.BaseId;
-import com.moau.moau.group.Group; // Group 엔티티 import
-import com.moau.moau.user.User;   // User 엔티티 import
+import com.moau.moau.group.domain.Group; // Group 엔티티 import
+import com.moau.moau.user.domain.User;   // User 엔티티 import
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

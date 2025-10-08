@@ -1,4 +1,4 @@
-package com.moau.moau.group;
+package com.moau.moau.group.domain;
 
 import jakarta.persistence.Embeddable;
 import lombok.AccessLevel;

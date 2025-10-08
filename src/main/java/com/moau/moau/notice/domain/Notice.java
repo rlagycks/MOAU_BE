@@ -1,8 +1,8 @@
-package com.moau.moau.notice;
+package com.moau.moau.notice.domain;
 
 import com.moau.moau.global.domain.BaseId;
-import com.moau.moau.group.Group;
-import com.moau.moau.user.User;
+import com.moau.moau.group.domain.Group;
+import com.moau.moau.user.domain.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
