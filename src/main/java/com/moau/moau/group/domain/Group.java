@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name = "GROUPS")
+@Table(name = "`GROUPS`") // <-- 이 부분을 수정!
 public class Group extends BaseId {
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -5,6 +5,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.moau.moau.schedule.dto.ScheduleResponse; // DTO import 추가
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api")
@@ -21,9 +24,11 @@ public class ScheduleController {
 
     // 2. 그룹 캘린더 조회 (개별 뷰)
     @GetMapping("/groups/{groupId}/schedules")
-    public ResponseEntity<?> getGroupSchedules(@PathVariable Long groupId, @RequestParam Integer year, @RequestParam Integer month) {
-        // TODO: scheduleService.getGroupSchedules(groupId, year, month) 호출 로직 구현
-        return ResponseEntity.ok(groupId + "번 그룹 캘린더 조회 성공");
+    public ResponseEntity<List<ScheduleResponse>> getGroupSchedules(@PathVariable Long groupId,
+                                                                    @RequestParam Integer year,
+                                                                    @RequestParam Integer month) {
+        List<ScheduleResponse> schedules = scheduleService.getGroupSchedules(groupId, year, month);
+        return ResponseEntity.ok(schedules);
     }
 
     // 3. 그룹 일정 생성
