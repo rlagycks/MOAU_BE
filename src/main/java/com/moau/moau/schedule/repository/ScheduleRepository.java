@@ -18,5 +18,5 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
      * @param endAt 조회 종료 시간
      * @return 일정 목록
      */
-    List<Schedule> findByGroup_IdAndStartsAtBetween(Long groupId, Instant startAt, Instant endAt);
+    List<Schedule> findByTeam_IdAndStartsAtBetween(Long groupId, Instant startAt, Instant endAt);
 }

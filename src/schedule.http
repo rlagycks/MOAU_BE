@@ -1,10 +1,10 @@
-### 1. 그룹 캘린더 조회 (성공 예상)
-# @name getGroupSchedules
-GET http://localhost:8080/api/groups/1/schedules?year=2025&month=10
+### 1. 팀 캘린더 조회 (성공 예상)
+# @name getTeamSchedules
+GET http://localhost:8080/api/teams/1/schedules?year=2025&month=10
 # Authorization: Bearer <여기에 나중에 토큰을 넣으세요>
 Accept: application/json
 
-### 2. 존재하지 않는 그룹 캘린더 조회 (404 에러 예상)
-GET http://localhost:8080/api/groups/999/schedules?year=2025&month=10
+### 2. 존재하지 않는 팀 캘린더 조회 (404 에러 예상)
+GET http://localhost:8080/api/teams/999/schedules?year=2025&month=10
 # Authorization: Bearer <토큰>
 Accept: application/json

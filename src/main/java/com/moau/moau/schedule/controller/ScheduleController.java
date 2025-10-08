@@ -1,11 +1,11 @@
-package com.moau.moau.schedule.controller; // 패키지 경로 수정됨
+package com.moau.moau.schedule.controller;
 
-import com.moau.moau.schedule.service.ScheduleService; // ScheduleService의 경로 수정됨
+import com.moau.moau.schedule.dto.ScheduleResponse;
+import com.moau.moau.schedule.service.ScheduleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.moau.moau.schedule.dto.ScheduleResponse; // DTO import 추가
 import java.util.List;
 
 @RestController
@@ -22,20 +22,21 @@ public class ScheduleController {
         return ResponseEntity.ok("내 캘린더 조회 성공");
     }
 
-    // 2. 그룹 캘린더 조회 (개별 뷰)
-    @GetMapping("/groups/{groupId}/schedules")
-    public ResponseEntity<List<ScheduleResponse>> getGroupSchedules(@PathVariable Long groupId,
-                                                                    @RequestParam Integer year,
-                                                                    @RequestParam Integer month) {
-        List<ScheduleResponse> schedules = scheduleService.getGroupSchedules(groupId, year, month);
+    // 2. 팀 캘린더 조회 (개별 뷰)
+    @GetMapping("/teams/{teamId}/schedules")
+    public ResponseEntity<List<ScheduleResponse>> getTeamSchedules(@PathVariable Long teamId,
+                                                                   @RequestParam Integer year,
+                                                                   @RequestParam Integer month) {
+        // 다음 단계에서 Service의 메소드 이름도 getTeamSchedules로 변경할 예정입니다.
+        List<ScheduleResponse> schedules = scheduleService.getTeamSchedules(teamId, year, month);
         return ResponseEntity.ok(schedules);
     }
 
-    // 3. 그룹 일정 생성
-    @PostMapping("/groups/{groupId}/schedules")
-    public ResponseEntity<?> createSchedule(@PathVariable Long groupId /*, @RequestBody ... */) {
+    // 3. 팀 일정 생성
+    @PostMapping("/teams/{teamId}/schedules")
+    public ResponseEntity<?> createSchedule(@PathVariable Long teamId /*, @RequestBody ... */) {
         // TODO: Request Body DTO를 만들고, service.createSchedule() 호출 로직 구현
-        return ResponseEntity.ok(groupId + "번 그룹에 일정 생성 성공");
+        return ResponseEntity.ok(teamId + "번 팀에 일정 생성 성공");
     }
 
     // 4. 단일 일정 수정
