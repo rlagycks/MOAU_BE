@@ -1,4 +1,4 @@
-package com.moau.moau.group.domain;
+package com.moau.moau.team.domain;
 
 import com.moau.moau.global.domain.BaseId;
 import com.moau.moau.user.domain.User;
@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "`GROUPS`") // <-- 이 부분을 수정!
-public class Group extends BaseId {
+public class Team extends BaseId {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_user_id", nullable = false)

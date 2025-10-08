@@ -1,7 +1,7 @@
 package com.moau.moau.notice.domain;
 
 import com.moau.moau.global.domain.BaseId;
-import com.moau.moau.group.domain.Group;
+import com.moau.moau.team.domain.Team;
 import com.moau.moau.user.domain.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -18,7 +18,7 @@ public class Notice extends BaseId {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "group_id", nullable = false)
-    private Group group;
+    private Team team;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "author_user_id", nullable = false)

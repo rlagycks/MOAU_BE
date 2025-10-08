@@ -1,4 +1,4 @@
-package com.moau.moau.group.domain;
+package com.moau.moau.team.domain;
 
 import com.moau.moau.global.domain.BaseId;
 import com.moau.moau.user.domain.User;
@@ -17,7 +17,7 @@ public class JoinRequest extends BaseId {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "group_id", nullable = false)
-    private Group group;
+    private Team team;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "request_user_id", nullable = false)
