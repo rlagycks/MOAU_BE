@@ -6,7 +6,10 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum CommonError implements BaseError {
     GROUP_NOT_FOUND(HttpStatus.NOT_FOUND, "GROUP_NOT_FOUND", "그룹을 찾을 수 없습니다."),
-    ACCESS_DENIED(HttpStatus.FORBIDDEN, "ACCESS_DENIED", "권한이 없습니다.");
+    ACCESS_DENIED(HttpStatus.FORBIDDEN, "ACCESS_DENIED", "권한이 없습니다."),
+
+    // [✅ 이 부분을 추가해주세요]
+    TEAM_NOT_FOUND(HttpStatus.NOT_FOUND, "TEAM_NOT_FOUND", "팀을 찾을 수 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

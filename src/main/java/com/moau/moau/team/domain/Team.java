@@ -1,7 +1,7 @@
-package com.moau.moau.group;
+package com.moau.moau.team.domain;
 
 import com.moau.moau.global.domain.BaseId;
-import com.moau.moau.user.User;
+import com.moau.moau.user.domain.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -10,8 +10,8 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name = "GROUPS")
-public class Group extends BaseId {
+@Table(name = "TEAM") // <-- 이 부분을 수정!
+public class Team extends BaseId {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_user_id", nullable = false)

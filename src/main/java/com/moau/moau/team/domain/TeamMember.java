@@ -1,6 +1,6 @@
-package com.moau.moau.group;
+package com.moau.moau.team.domain;
 
-import com.moau.moau.user.User;
+import com.moau.moau.user.domain.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -12,15 +12,15 @@ import java.time.Instant;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "GROUP_MEMBERS")
-public class GroupMember {
+public class TeamMember {
 
     @EmbeddedId // 위에서 만든 복합키 클래스를 ID로 사용
-    private GroupMemberId id;
+    private TeamMemberId id;
 
     @MapsId("groupId") // 복합키의 groupId 필드를 실제 Group 엔티티와 매핑
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "group_id")
-    private Group group;
+    private Team team;
 
     @MapsId("userId") // 복합키의 userId 필드를 실제 User 엔티티와 매핑
     @ManyToOne(fetch = FetchType.LAZY)

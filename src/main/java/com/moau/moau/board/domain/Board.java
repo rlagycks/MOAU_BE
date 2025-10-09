@@ -1,7 +1,7 @@
-package com.moau.moau.board;
+package com.moau.moau.board.domain;
 
 import com.moau.moau.global.domain.BaseId;
-import com.moau.moau.group.Group;
+import com.moau.moau.team.domain.Team;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -15,7 +15,7 @@ public class Board extends BaseId {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "group_id", nullable = false)
-    private Group group;
+    private Team team;
 
     @Column(nullable = false)
     private String name;

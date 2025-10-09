@@ -1,4 +1,4 @@
-package com.moau.moau.user;
+package com.moau.moau.user.domain;
 
 import com.moau.moau.global.domain.BaseSoftDelete;
 import jakarta.persistence.Column;

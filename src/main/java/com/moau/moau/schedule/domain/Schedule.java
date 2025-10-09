@@ -1,8 +1,8 @@
-package com.moau.moau.schedule;
+package com.moau.moau.schedule.domain;
 
 import com.moau.moau.global.domain.BaseId;
-import com.moau.moau.group.Group; // Group 엔티티 import
-import com.moau.moau.user.User;   // User 엔티티 import
+import com.moau.moau.team.domain.Team; // Group 엔티티 import
+import com.moau.moau.user.domain.User;   // User 엔티티 import
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -18,7 +18,7 @@ public class Schedule extends BaseId {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "group_id", nullable = false)
-    private Group group;
+    private Team team;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by", nullable = false)

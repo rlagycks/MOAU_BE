@@ -1,24 +1,21 @@
-package com.moau.moau.notice;
+package com.moau.moau.board.domain;
 
 import com.moau.moau.global.domain.BaseId;
-import com.moau.moau.group.Group;
-import com.moau.moau.user.User;
+import com.moau.moau.user.domain.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
-
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name = "NOTICES")
-public class Notice extends BaseId {
+@Table(name = "BOARD_POSTS")
+public class BoardPost extends BaseId {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "group_id", nullable = false)
-    private Group group;
+    @JoinColumn(name = "board_id", nullable = false)
+    private Board board;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "author_user_id", nullable = false)
@@ -27,17 +24,13 @@ public class Notice extends BaseId {
     @Column(nullable = false)
     private String title;
 
-    @Lob
+    @Lob // MEDIUMTEXT, LONGTEXT 등 대용량 텍스트를 위한 어노테이션
     @Column(nullable = false)
     private String body;
 
-    @Column(name = "is_pinned", nullable = false)
-    private Boolean isPinned = false;
-
     // @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private String status;
+    private String status; // ENUM 타입
 
-    @Column(name = "published_at")
-    private Instant publishedAt; // 게시 시각
+    @Column(name = "is_pinned", nullable = false)
+    private Boolean isPinned = false; // 기본값을 false로 설정
 }
