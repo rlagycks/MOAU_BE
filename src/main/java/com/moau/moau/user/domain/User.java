@@ -1,9 +1,7 @@
 package com.moau.moau.user.domain;
 
 import com.moau.moau.global.domain.BaseSoftDelete;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,6 +11,8 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "USERS")
 public class User extends BaseSoftDelete {
+
+    public enum Status { ACTIVE, SUSPENDED, DEACTIVATED }
 
     @Column(unique = true, nullable = false)
     private String email;
@@ -24,4 +24,8 @@ public class User extends BaseSoftDelete {
     // @Enumerated(EnumType.STRING)
     // @Column(nullable = false)
     // private UserStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private Status status = Status.ACTIVE;
 }
