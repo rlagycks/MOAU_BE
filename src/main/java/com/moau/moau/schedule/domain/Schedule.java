@@ -1,10 +1,12 @@
 package com.moau.moau.schedule.domain;
 
 import com.moau.moau.global.domain.BaseId;
-import com.moau.moau.team.domain.Team; // Group 엔티티 import
-import com.moau.moau.user.domain.User;   // User 엔티티 import
+import com.moau.moau.team.domain.Team;
+import com.moau.moau.user.domain.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor; // [✅ 추가]
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -12,6 +14,8 @@ import java.time.Instant;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor // [✅ 추가]
+@Builder
 @Entity
 @Table(name = "SCHEDULES")
 public class Schedule extends BaseId {

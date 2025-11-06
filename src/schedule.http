@@ -8,3 +8,15 @@ Accept: application/json
 GET http://localhost:8080/api/teams/999/schedules?year=2025&month=10
 # Authorization: Bearer <토큰>
 Accept: application/json
+
+### 3. 팀 일정 생성 (성공 예상)
+POST http://localhost:8080/api/teams/1/schedules
+Content-Type: application/json
+
+{
+  "title": "첫번째 테스트 일정",
+  "description": "API로 만드는 첫번째 일정입니다.",
+  "startsAt": "2025-10-10T14:00:00Z",
+  "endsAt": "2025-10-10T16:00:00Z",
+  "location": "온라인"
+}
