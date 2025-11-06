@@ -4,7 +4,7 @@ import com.moau.moau.schedule.dto.ScheduleCreateRequest;
 import com.moau.moau.schedule.dto.ScheduleResponse;
 import com.moau.moau.schedule.service.ScheduleService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus; // [✅ 추가]
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,11 +17,12 @@ public class ScheduleController {
 
     private final ScheduleService scheduleService;
 
-    // 1. 내 캘린더 조회 (통합 뷰)
+    // 1. 내 캘린더 조회 (통합 뷰) [✅ 수정됨]
     @GetMapping("/schedules/me")
-    public ResponseEntity<?> getMySchedules(@RequestParam Integer year, @RequestParam Integer month) {
-        // TODO: scheduleService.getMySchedules(year, month) 호출 로직 구현
-        return ResponseEntity.ok("내 캘린더 조회 성공");
+    public ResponseEntity<List<ScheduleResponse>> getMySchedules(@RequestParam Integer year,
+                                                                 @RequestParam Integer month) {
+        List<ScheduleResponse> schedules = scheduleService.getMySchedules(year, month);
+        return ResponseEntity.ok(schedules);
     }
 
     // 2. 팀 캘린더 조회 (개별 뷰)
@@ -33,12 +34,11 @@ public class ScheduleController {
         return ResponseEntity.ok(schedules);
     }
 
-    // 3. 팀 일정 생성 [✅ 수정됨]
+    // 3. 팀 일정 생성
     @PostMapping("/teams/{teamId}/schedules")
     public ResponseEntity<Long> createSchedule(@PathVariable Long teamId,
                                                @RequestBody ScheduleCreateRequest request) {
         Long scheduleId = scheduleService.createSchedule(teamId, request);
-        // 생성 성공 시, 201 Created 상태 코드와 함께 생성된 일정의 ID를 반환합니다.
         return ResponseEntity.status(HttpStatus.CREATED).body(scheduleId);
     }
 

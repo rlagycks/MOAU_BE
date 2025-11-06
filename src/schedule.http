@@ -20,3 +20,7 @@ Content-Type: application/json
   "endsAt": "2025-10-10T16:00:00Z",
   "location": "온라인"
 }
+
+### 4. 내 캘린더 조회 (id=2 유저로 테스트)
+GET http://localhost:8080/api/schedules/me?year=2025&month=10
+Accept: application/json
