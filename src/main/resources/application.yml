@@ -13,7 +13,7 @@ spring:
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${RDS_ENDPOINT}:3306/${RDS_DB}?sslMode=VERIFY_IDENTITY&enabledTLSProtocols=TLSv1.2,TLSv1.3&serverTimezone=UTC&characterEncoding=utf8mb4
+    url: jdbc:mysql://127.0.0.1:3307/moau
     username: ${RDS_USER}
     password: ${RDS_PASS}
 
