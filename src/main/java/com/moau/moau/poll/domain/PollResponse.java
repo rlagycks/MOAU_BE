@@ -4,29 +4,32 @@ import com.moau.moau.global.domain.BaseId;
 import com.moau.moau.user.domain.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor; // [✅ @Builder를 위해 추가]
+import lombok.Builder; // [✅ 추가]
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor // [✅ @Builder를 위해 추가]
+@Builder // [✅ 추가]
 @Entity
-@Table(name = "POLL_RESPONSES")
+@Table(name = "POLL_RESPONSES") // [✅ 규칙 통일]
 public class PollResponse extends BaseId {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "poll_id", nullable = false)
+    @JoinColumn(name = "POLL_ID", nullable = false) // [✅ 대문자 통일]
     private Poll poll;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "respondent_user_id", nullable = false)
+    @JoinColumn(name = "RESPONDENT_USER_ID", nullable = false) // [✅ 대문자 통일]
     private User respondent;
 
     @Column(name = "anon_identity", length = 8)
     private String anonIdentity;
 
-    // @Enumerated(EnumType.STRING)
     @Column(name = "response_type")
-    private String responseType;
+    private String responseType; // ENUM
 
     @Column(name = "value_text", columnDefinition = "TEXT")
     private String valueText;

@@ -1,5 +1,6 @@
 package com.moau.moau.team.domain;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
@@ -7,12 +8,15 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 
-@Embeddable // 이 클래스가 다른 엔티티에 포함될 수 있음을 의미
+@Embeddable
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@EqualsAndHashCode // 복합키는 equals와 hashCode를 구현해야 합니다.
+@EqualsAndHashCode
 public class TeamMemberId implements Serializable {
 
-    private Long groupId;
+    @Column(name = "TEAM_ID") // [✅ 수정] 대문자
+    private Long teamId;
+
+    @Column(name = "USER_ID") // [✅ 수정] 대문자
     private Long userId;
 
 }

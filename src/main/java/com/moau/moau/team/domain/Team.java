@@ -4,13 +4,17 @@ import com.moau.moau.global.domain.BaseId;
 import com.moau.moau.user.domain.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Builder
 @Entity
-@Table(name = "TEAM") // <-- 이 부분을 수정!
+@Table(name = "TEAMS") // [✅ 수정] "TEAMS" (대문자 복수형)
 public class Team extends BaseId {
 
     @ManyToOne(fetch = FetchType.LAZY)

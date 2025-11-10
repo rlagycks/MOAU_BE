@@ -5,7 +5,7 @@ import com.moau.moau.team.domain.Team;
 import com.moau.moau.user.domain.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor; // [✅ 추가]
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,15 +14,15 @@ import java.time.Instant;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor // [✅ 추가]
+@AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "SCHEDULES")
+@Table(name = "SCHEDULES") // [✅ 규칙 통일]
 public class Schedule extends BaseId {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "group_id", nullable = false)
-    private Team team;
+    @JoinColumn(name = "TEAM_ID", nullable = false) // [✅ 수정] "group_id" -> "TEAM_ID"
+    private Team team; // [✅ 수정] 참조 엔티티
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by", nullable = false)

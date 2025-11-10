@@ -5,6 +5,8 @@ import com.moau.moau.team.domain.Team;
 import com.moau.moau.user.domain.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor; // [✅ @Builder를 위해 추가]
+import lombok.Builder; // [✅ 추가]
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -12,16 +14,18 @@ import java.time.Instant;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor // [✅ @Builder를 위해 추가]
+@Builder // [✅ 추가]
 @Entity
-@Table(name = "NOTICES")
+@Table(name = "NOTICES") // [✅ 규칙 통일]
 public class Notice extends BaseId {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "group_id", nullable = false)
+    @JoinColumn(name = "TEAM_ID", nullable = false) // [✅ 수정] "group_id" -> "TEAM_ID"
     private Team team;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "author_user_id", nullable = false)
+    @JoinColumn(name = "AUTHOR_USER_ID", nullable = false) // [✅ 대문자 통일]
     private User author;
 
     @Column(nullable = false)
@@ -34,10 +38,9 @@ public class Notice extends BaseId {
     @Column(name = "is_pinned", nullable = false)
     private Boolean isPinned = false;
 
-    // @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String status;
+    private String status; // ENUM
 
     @Column(name = "published_at")
-    private Instant publishedAt; // 게시 시각
+    private Instant publishedAt;
 }

@@ -12,27 +12,26 @@ import java.time.Instant;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name = "JOIN_REQUESTS")
+@Table(name = "JOIN_REQUESTS") // [✅ 수정] 대문자 복수형
 public class JoinRequest extends BaseId {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "group_id", nullable = false)
-    private Team team;
+    @JoinColumn(name = "TEAM_ID", nullable = false) // [✅ 수정] "group_id" -> "TEAM_ID"
+    private Team team; // [✅ 수정] Group -> Team
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "request_user_id", nullable = false)
+    @JoinColumn(name = "REQUEST_USER_ID", nullable = false) // [✅ 수정] 대문자
     private User requestUser;
 
     @Column(nullable = false)
-    // @Enumerated(EnumType.STRING)
-    private String status; // ENUM 타입 (예: PENDING, APPROVED, REJECTED)
+    private String status; // ENUM 타입
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "decided_by")
-    private User decidedBy; // 요청을 승인/거절한 관리자
+    @JoinColumn(name = "DECIDED_BY") // [✅ 수정] 대문자
+    private User decidedBy;
 
-    // BaseId가 createdAt, updatedAt을 이미 가지고 있으므로,
-    // ERD의 requested_at은 createdAt으로 대체하고 decided_at만 추가합니다.
+    // BaseId가 createdAt을 "created_at"으로 가지고 있으므로,
+    // ERD의 requested_at을 createdAt으로 사용하고 decided_at만 추가합니다.
     @Column(name = "decided_at")
     private Instant decidedAt;
 
