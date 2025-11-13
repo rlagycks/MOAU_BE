@@ -1,5 +1,6 @@
 package com.moau.moau.jwt.infra;
 
+import com.moau.moau.global.exception.error.CommonError;
 import io.jsonwebtoken.security.Keys;
 
 import javax.crypto.SecretKey;
@@ -33,7 +34,7 @@ public class SafeKeys {
                 MessageDigest sha = MessageDigest.getInstance("SHA-256");
                 keyBytes = sha.digest(keyBytes); // 32바이트 확보
             } catch (Exception e) {
-                throw new RuntimeException("SHA-256 처리 실패", e);
+                throw new IllegalStateException(CommonError.JWT_SECRET_SHA256_FAILED.getMessage(), e);
             }
         }
         return Keys.hmacShaKeyFor(keyBytes);
