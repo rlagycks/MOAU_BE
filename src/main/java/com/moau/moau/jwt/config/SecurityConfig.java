@@ -14,28 +14,40 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtParserPort jwtParser) throws Exception {
-        http
-                .csrf(csrf -> csrf.disable())
-                .cors(Customizer.withDefaults())
-                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtParserPort parser) {
+        return new JwtAuthenticationFilter(parser);
+    }
 
+    @Bean
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http,
+            JwtAuthenticationFilter jwtFilter
+    ) throws Exception {
+
+        http
+                // CSRF는 REST API라 비활성화
+                .csrf(csrf -> csrf.disable())
+                // CORS 설정은 CorsConfig에서 세부 지정
+                .cors(Customizer.withDefaults())
+                // 세션은 완전히 비활성화 (JWT만 사용)
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // 🔓 인증 없이 열어둘 경로
+                        //  앱 교환용 로그인/토큰 회전은 인증 없이 허용
                         .requestMatchers(
-                                "/dev/auth/**",        // 개발용 발급
-                                "/api/auth/refresh",   // RT 재발급
-                                "/api/auth/logout",    // 로그아웃
-                                "/login/oauth2/**",    // 카카오 콜백
-                                "/actuator/health"
+                                "/api/auth/kakao/code/exchange",
+                                "/api/auth/refresh",
+                                "/actuator/health",
+                                "/favicon.ico"
                         ).permitAll()
-                        // 🔐 그 외 /api/** 는 AT 필요
+                        //  로그아웃은 인증된 사용자만 가능하도록
+                        .requestMatchers("/api/auth/logout").authenticated()
+                        //  나머지 /api/** 는 전부 JWT 인증 필요
                         .requestMatchers("/api/**").authenticated()
+                        // 그 외는 전부 허용 (문서, 정적 리소스 등)
                         .anyRequest().permitAll()
                 )
-
-                // JWT 필터 등록 (폼로그인/세션 안씀)
-                .addFilterBefore(new JwtAuthenticationFilter(jwtParser), UsernamePasswordAuthenticationFilter.class);
+                //  불필요한 oauth2Login 제거 (앱 교환 방식에서는 사용하지 않음)
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
