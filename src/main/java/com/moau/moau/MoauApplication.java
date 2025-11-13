@@ -6,7 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 @EnableJpaAuditing
-@ConfigurationPropertiesScan // 🔥 이게 핵심
+@ConfigurationPropertiesScan //  이게 핵심
 @SpringBootApplication
 public class MoauApplication {
     public static void main(String[] args) {
