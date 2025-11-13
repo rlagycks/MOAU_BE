@@ -51,7 +51,7 @@ jobs:
         run: docker compose -f docker-compose.ci.yml up --wait -d
 
       - name: Run tests
-        run: ./gradlew test
+        run: ./gradlew test --info
 
       - name: MySQL logs on failure
         if: failure()
