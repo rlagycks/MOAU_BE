@@ -53,6 +53,10 @@ jobs:
               "AWS_REGION=${{ secrets.AWS_REGION }}",
               "AWS_S3_BUCKET=${{ secrets.AWS_S3_BUCKET }}",
               "JWT_SECRET=${{ secrets.JWT_SECRET }}",
+              "KAKAO_REST_API_KEY=${{ secrets.KAKAO_REST_API_KEY }}",
+              "KAKAO_TOKEN_URI=https://kauth.kakao.com/oauth/token",
+              "KAKAO_USER_ME_URI=https://kapi.kakao.com/v2/user/me",
+              "KAKAO_REDIRECT_URIS=kakao9ec4a4d46982a8f4d7b19fcc7099c63c://oauth",
               "ENV",
 
               "# --- compose 파일(최초 1회 생성) ---",
