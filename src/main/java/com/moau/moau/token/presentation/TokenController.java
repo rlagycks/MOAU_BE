@@ -1,42 +1,39 @@
+// src/main/java/com/moau/moau/token/presentation/TokenController.java
 package com.moau.moau.token.presentation;
 
+import com.moau.moau.global.exception.error.CommonError;
 import com.moau.moau.token.application.TokenRefreshService;
-import jakarta.validation.constraints.NotBlank;
+import com.moau.moau.token.dto.request.RefreshRequest;
+import com.moau.moau.token.dto.response.RefreshResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Instant;
-
-/**
- * 토큰 재발급 (RefreshToken → 새 AccessToken + RefreshToken)
- * 요청 예시:
- *   POST /api/auth/refresh
- *   Body: { "refreshToken": "eyJhbGciOi..." }
- * 응답:
- *   200 OK : 새 AT/RT 발급
- *   401 Unauthorized : RT 만료 or 위조
- */
 @RestController
-@RequiredArgsConstructor
 @RequestMapping("/api/auth")
+@RequiredArgsConstructor
 public class TokenController {
 
-    private final TokenRefreshService refreshService;
+    private final TokenRefreshService tokenRefreshService;
 
-    /** 요청 DTO */
-    public record RefreshRequest(@NotBlank String refreshToken) {}
-
-    /** 응답 DTO */
-    public record RefreshResponse(String accessToken, String refreshToken, Instant refreshExpiresAt) {}
-
+    /** 리프레시 토큰 회전 */
     @PostMapping("/refresh")
-    public ResponseEntity<?> refresh(@RequestBody RefreshRequest req) {
+    public ResponseEntity<?> refresh(@Valid @RequestBody RefreshRequest req) {
         try {
-            var r = refreshService.refresh(req.refreshToken());
-            return ResponseEntity.ok(new RefreshResponse(r.accessToken(), r.refreshToken(), r.refreshExpiresAt()));
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(401).body(e.getMessage());
+            var rotated = tokenRefreshService.rotate(req.getRefreshToken());
+
+            return ResponseEntity.ok(new RefreshResponse(
+                    rotated.accessToken(),
+                    rotated.refreshToken(),
+                    rotated.refreshTokenExpiresAt()
+            ));
+        } catch (IllegalArgumentException e) {
+            // 예: rotate 내부에서 잘못된 토큰이면 IllegalArgumentException 던진다고 가정
+            var error = CommonError.REFRESH_TOKEN_INVALID;
+            return ResponseEntity
+                    .status(error.getHttpStatus())
+                    .body(error.getMessage());
         }
     }
 }
