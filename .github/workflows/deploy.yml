@@ -14,6 +14,24 @@ jobs:
       id-token: write
       contents: read
     steps:
+      - name: 'Debug: OIDC 토큰의 sub 클레임 값 확인'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              const token = await core.getIDToken('sts.amazonaws.com');
+              const payload = token.split('.')[1];
+              const decodedPayload = Buffer.from(payload, 'base64').toString('utf-8');
+              core.info(`--- OIDC 토큰 내용물(Payload) ---`);
+              core.info(decodedPayload);
+              core.info(`---------------------------------`);
+              const payloadJson = JSON.parse(decodedPayload);
+              core.info(`!!! AWS 신뢰 정책의 "sub" 값으로 아래를 사용하세요 !!!`);
+              core.info(payloadJson.sub);
+            } catch (error) {
+              core.setFailed(`OIDC 토큰 가져오기 실패: ${error.message}`);
+            }
+
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
