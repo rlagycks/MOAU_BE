@@ -1,0 +1,95 @@
+############
+# OS 공통  #
+############
+.DS_Store
+Thumbs.db
+
+################
+# Java / JVM   #
+################
+*.class
+*.log
+hs_err_pid*
+replay_pid*
+*.hprof
+**/.attach_pid*
+
+#############
+# Gradle    #
+#############
+.gradle/
+build/
+**/build/
+
+# Gradle Wrapper (항상 커밋)
+!gradle/wrapper/
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+!gradlew
+!gradlew.bat
+
+#############
+# Maven     #
+#############
+target/
+
+###################
+# IntelliJ / IDE  #
+###################
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+**/out/
+bin/
+**/bin/
+
+#############
+# VS Code   #
+#############
+.vscode/
+
+########################
+# Env / Secret 파일    #
+########################
+.env
+.env.*
+.envrc
+.direnv/
+
+######################################
+# Spring Boot 프로필(yml) 정책       #
+######################################
+# 로컬 비밀 포함: 무조건 무시
+application-dev.yml
+
+# 기본 정책: 프로필별 yml은 무시
+application-*.yml
+
+# 예외(커밋 허용): 운영 기본/CI/예시
+!application.yml
+!application-ci.yml
+!application-dev.example.yml
+
+######################################
+# Docker Compose 정책                #
+######################################
+# 로컬 비밀 포함: 무조건 무시
+docker-compose.yml
+
+# 예외(커밋 허용): CI/예시
+!docker-compose.ci.yml
+!docker-compose.example.yml
+
+########################
+# 로컬 전용 설정 폴더  #
+########################
+config-local/
+
+########################
+# 인증서/키 류(선택)  #
+########################
+*.pem
+*.key
+*.crt
