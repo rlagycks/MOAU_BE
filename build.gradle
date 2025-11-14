@@ -25,11 +25,38 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    // Web (MVC)
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    compileOnly 'org.projectlombok:lombok'
+
+    // WebClient (Kakao OAuth 토큰/유저 조회용)
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+    // JPA
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+    // Security (JWT 인증 필터용)
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+
+
+    // JWT (JJWT)
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+    runtimeOnly  'io.jsonwebtoken:jjwt-impl:0.12.6'
+    runtimeOnly  'io.jsonwebtoken:jjwt-jackson:0.12.6'
+
+    // Bean Validation (요청 DTO 검증)
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+
+    // DB 드라이버
     runtimeOnly 'com.mysql:mysql-connector-j'
+
+    // Lombok
+    compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
+
+    // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
