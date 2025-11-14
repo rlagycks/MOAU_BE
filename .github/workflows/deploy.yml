@@ -14,66 +14,27 @@ jobs:
       id-token: write
       contents: read
     steps:
-      - name: 'Debug: OIDC 토큰 검증'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            try {
-              const token = await core.getIDToken('sts.amazonaws.com');
-              core.info(' OIDC 토큰 성공적으로 가져옴');
-              const payload = token.split('.')[1];
-              const decodedPayload = Buffer.from(payload, 'base64').toString('utf-8');
-              const payloadJson = JSON.parse(decodedPayload);
-              core.info(`sub: ${payloadJson.sub}`);
-              core.info(`aud: ${payloadJson.aud}`);
-              core.info(`iss: ${payloadJson.iss}`);
-            } catch (error) {
-              core.setFailed(` OIDC 토큰 가져오기 실패: ${error.message}`);
-            }
-
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::788391084087:role/moau-deploy-gha-role
+          role-to-assume: arn:aws:iam::788391084087:role/Moau-OCID
           aws-region: ${{ env.AWS_REGION }}
-
-      - name: Verify AWS Credentials
-        run: |
-          echo "=== AWS 자격증명 확인 ==="
-          if aws sts get-caller-identity > /tmp/creds.json 2>&1; then
-            echo " 자격증명 성공"
-            cat /tmp/creds.json
-          else
-            echo " 자격증명 실패"
-            cat /tmp/creds.json
-            exit 1
-          fi
 
       - name: Find target EC2 by tag Name=moau-ec2
         id: ec2
         run: |
-          echo "EC2 인스턴스 검색 중..."
-          if ID=$(aws ec2 describe-instances \
+          ID=$(aws ec2 describe-instances \
             --filters "Name=tag:Name,Values=moau-ec2" "Name=instance-state-name,Values=running" \
-            --query "Reservations[0].Instances[0].InstanceId" --output text 2>&1); then
-            if [ "$ID" = "None" ] || [ -z "$ID" ]; then
-              echo " 실행 중인 moau-ec2 인스턴스를 찾을 수 없음"
-              echo "모든 인스턴스 목록:"
-              aws ec2 describe-instances --query 'Reservations[*].Instances[*].[InstanceId,Tags[?Key==`Name`].Value|[0],State.Name]' --output table
-              exit 1
-            fi
-            echo " EC2 ID 찾음: $ID"
-            echo "id=$ID" >> $GITHUB_OUTPUT
-          else
-            echo " EC2 describe-instances 실패"
-            echo "$ID"
+            --query "Reservations[0].Instances[0].InstanceId" --output text)
+          if [ "$ID" = "None" ] || [ -z "$ID" ]; then
+            echo "No running instance with tag Name=moau-ec2" >&2
             exit 1
           fi
+          echo "id=$ID" >> $GITHUB_OUTPUT
 
       - name: Deploy via SSM Run Command
         run: |
-          echo "SSM 명령 전송 중..."
-          if COMMAND_ID=$(aws ssm send-command \
+          aws ssm send-command \
             --instance-ids "${{ steps.ec2.outputs.id }}" \
             --document-name "AWS-RunShellScript" \
             --comment "MOAU deploy" \
@@ -122,11 +83,4 @@ jobs:
               "docker compose up -d",
               "docker image prune -f"
             ]' \
-            --output text 2>&1); then
-            echo " SSM 명령 전송 성공"
-            echo "Command ID: $COMMAND_ID"
-          else
-            echo " SSM 명령 전송 실패"
-            echo "$COMMAND_ID"
-            exit 1
-          fi
+            --output text
