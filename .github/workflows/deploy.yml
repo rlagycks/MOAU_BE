@@ -20,14 +20,14 @@ jobs:
           role-to-assume: arn:aws:iam::788391084087:role/Moau-OCID
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Find target EC2 by tag Name=moau-ec2
+      - name: Find target EC2 by tag Name=MOAU
         id: ec2
         run: |
           ID=$(aws ec2 describe-instances \
-            --filters "Name=tag:Name,Values=moau-ec2" "Name=instance-state-name,Values=running" \
+            --filters "Name=tag:Name,Values=MOAU" "Name=instance-state-name,Values=running" \
             --query "Reservations[0].Instances[0].InstanceId" --output text)
           if [ "$ID" = "None" ] || [ -z "$ID" ]; then
-            echo "No running instance with tag Name=moau-ec2" >&2
+            echo "No running instance with tag Name=MOAU" >&2
             exit 1
           fi
           echo "id=$ID" >> $GITHUB_OUTPUT
