@@ -13,13 +13,35 @@ spring:
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${RDS_ENDPOINT}:3306/${RDS_DB}?sslMode=VERIFY_IDENTITY&enabledTLSProtocols=TLSv1.2,TLSv1.3&serverTimezone=UTC&characterEncoding=utf8mb4
+    url: jdbc:mysql://127.0.0.1:3307/moau
     username: ${RDS_USER}
     password: ${RDS_PASS}
 
 security:
   jwt:
-    secret: ${JWT_SECRET}
+    secret: "c9d3d0f2c5b8a1e7f4c2d9a0b3e8f1a6c7d2e5f9a4b7c1d3e6f0a2b4c6d8e0f2"
+    access-token-expiration-msec: 900000        # 15분 (예시)
+    refresh-token-expiration-msec: 1209600000   # 14일 (예시)
+  oauth2:
+    client:
+      provider:
+        kakao:
+          authorization-uri: https://kauth.kakao.com/oauth/authorize
+          token-uri: https://kauth.kakao.com/oauth/token
+          user-info-uri: https://kapi.kakao.com/v2/user/me
+          user-name-attribute: id
+      registration:
+        kakao:
+          client-id: e2f36d079866b90e1a76d7dea20892c2
+          # ⛔ client-secret는 코드에 하드코딩하지 말고 환경변수로!
+          client-secret: ${KAKAO_CLIENT_SECRET}
+          redirect-uri: http://localhost:8080/login/oauth2/kakao
+          authorization-grant-type: authorization_code
+          client-name: Kakao
+          scope:
+            - profile_nickname
+            - profile_image
+            - account_email
 
 cloud:
   aws:

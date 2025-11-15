@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import com.moau.moau.user.domain.User;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -28,7 +29,7 @@ public class BoardPost extends BaseId {
     @Column(nullable = false)
     private String title;
 
-    @Lob
+    @Lob // MEDIUMTEXT, LONGTEXT 등 대용량 텍스트를 위한 어노테이션
     @Column(nullable = false)
     private String body;
 

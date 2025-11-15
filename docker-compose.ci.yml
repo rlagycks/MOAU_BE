@@ -17,7 +17,7 @@ services:
       - --explicit_defaults_for_timestamp=1
       - --default-authentication-plugin=mysql_native_password
     healthcheck:
-      test: ["CMD","mysqladmin","ping","-h","127.0.0.1","-u${CI_DB_USER}","-p${CI_DB_PASSWORD}"]
+      test: [ "CMD","mysqladmin","ping","-h","localhost","-uroot","-p${CI_DB_ROOT_PASSWORD}" ]
       interval: 5s
       timeout: 3s
       retries: 30

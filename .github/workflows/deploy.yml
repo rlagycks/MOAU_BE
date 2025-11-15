@@ -1,0 +1,86 @@
+name: Deploy
+on:
+  push:
+    branches: [ "main" ]
+
+env:
+  AWS_REGION: ap-northeast-2
+  IMAGE: ghcr.io/rlagycks/moau_be:latest
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::788391084087:role/Moau-OCID
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Find target EC2 by tag Name=MOAU
+        id: ec2
+        run: |
+          ID=$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=MOAU" "Name=instance-state-name,Values=running" \
+            --query "Reservations[0].Instances[0].InstanceId" --output text)
+          if [ "$ID" = "None" ] || [ -z "$ID" ]; then
+            echo "No running instance with tag Name=MOAU" >&2
+            exit 1
+          fi
+          echo "id=$ID" >> $GITHUB_OUTPUT
+
+      - name: Deploy via SSM Run Command
+        run: |
+          aws ssm send-command \
+            --instance-ids "${{ steps.ec2.outputs.id }}" \
+            --document-name "AWS-RunShellScript" \
+            --comment "MOAU deploy" \
+            --parameters commands='[
+              "set -e",
+              "sudo mkdir -p /srv/moau && sudo chown $USER:$USER /srv/moau",
+              "cd /srv/moau",
+
+              "# --- .env 생성(Secrets → 런타임 주입) ---",
+              "cat > .env <<\"ENV\"",
+              "SPRING_PROFILES_ACTIVE=prod",
+              "RDS_ENDPOINT=${{ secrets.RDS_ENDPOINT }}",
+              "RDS_DB=${{ secrets.RDS_DB }}",
+              "RDS_USER=${{ secrets.RDS_USER }}",
+              "RDS_PASS=${{ secrets.RDS_PASS }}",
+              "AWS_REGION=${{ secrets.AWS_REGION }}",
+              "AWS_S3_BUCKET=${{ secrets.AWS_S3_BUCKET }}",
+              "JWT_SECRET=${{ secrets.JWT_SECRET }}",
+              "KAKAO_REST_API_KEY=${{ secrets.KAKAO_REST_API_KEY }}",
+              "KAKAO_TOKEN_URI=https://kauth.kakao.com/oauth/token",
+              "KAKAO_USER_ME_URI=https://kapi.kakao.com/v2/user/me",
+              "KAKAO_REDIRECT_URIS=kakao9ec4a4d46982a8f4d7b19fcc7099c63c://oauth",
+              "ENV",
+
+              "# --- compose 파일(최초 1회 생성) ---",
+              "if [ ! -f docker-compose.yml ]; then cat > docker-compose.yml <<\"YAML\"",
+              "version: \"3.8\"",
+              "services:",
+              "  app:",
+              "    image: ${IMAGE}",
+              "    container_name: moau-app",
+              "    restart: unless-stopped",
+              "    ports: [\"80:8080\"]",
+              "    env_file: [.env]",
+              "    healthcheck:",
+              "      test: [\"CMD\", \"wget\", \"-qO-\", \"http://localhost:8080/actuator/health\"]",
+              "      interval: 20s",
+              "      timeout: 5s",
+              "      retries: 10",
+              "YAML",
+              "fi",
+
+              "# --- GHCR 로그인 & 배포 ---",
+              "echo \"${{ secrets.GITHUB_TOKEN }}\" | docker login ghcr.io -u ${{ github.actor }} --password-stdin",
+              "docker compose pull",
+              "docker compose up -d",
+              "docker image prune -f"
+            ]' \
+            --output text

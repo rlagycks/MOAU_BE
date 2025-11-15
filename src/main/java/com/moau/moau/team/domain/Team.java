@@ -1,11 +1,12 @@
 package com.moau.moau.team.domain;
 
 import com.moau.moau.global.domain.BaseId;
-import com.moau.moau.user.domain.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import com.moau.moau.user.domain.User;
+
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 

@@ -1,11 +1,11 @@
 package com.moau.moau.board.domain;
 
 import com.moau.moau.global.domain.BaseId;
-import com.moau.moau.user.domain.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor; // [✅ @Builder를 위해 추가]
 import lombok.Builder; // [✅ 추가]
+import com.moau.moau.user.domain.User;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 

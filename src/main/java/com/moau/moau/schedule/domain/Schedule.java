@@ -3,10 +3,12 @@ package com.moau.moau.schedule.domain;
 import com.moau.moau.global.domain.BaseId;
 import com.moau.moau.team.domain.Team;
 import com.moau.moau.user.domain.User;
+import com.moau.moau.team.domain.Team; // Group 엔티티 import
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import com.moau.moau.user.domain.User;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
