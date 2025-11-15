@@ -1,5 +1,5 @@
 // src/main/java/com/moau/moau/user/domain/repository/UserRepository.java
-package com.moau.moau.user.domain.repository;
+package com.moau.moau.user.repository;
 
 import com.moau.moau.user.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;

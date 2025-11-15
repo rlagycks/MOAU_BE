@@ -1,8 +1,10 @@
 package com.moau.moau.schedule.controller;
 
+import com.moau.moau.schedule.dto.ScheduleCreateRequest;
 import com.moau.moau.schedule.dto.ScheduleResponse;
 import com.moau.moau.schedule.service.ScheduleService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,11 +17,12 @@ public class ScheduleController {
 
     private final ScheduleService scheduleService;
 
-    // 1. 내 캘린더 조회 (통합 뷰)
+    // 1. 내 캘린더 조회 (통합 뷰) [✅ 수정됨]
     @GetMapping("/schedules/me")
-    public ResponseEntity<?> getMySchedules(@RequestParam Integer year, @RequestParam Integer month) {
-        // TODO: scheduleService.getMySchedules(year, month) 호출 로직 구현
-        return ResponseEntity.ok("내 캘린더 조회 성공");
+    public ResponseEntity<List<ScheduleResponse>> getMySchedules(@RequestParam Integer year,
+                                                                 @RequestParam Integer month) {
+        List<ScheduleResponse> schedules = scheduleService.getMySchedules(year, month);
+        return ResponseEntity.ok(schedules);
     }
 
     // 2. 팀 캘린더 조회 (개별 뷰)
@@ -27,16 +30,16 @@ public class ScheduleController {
     public ResponseEntity<List<ScheduleResponse>> getTeamSchedules(@PathVariable Long teamId,
                                                                    @RequestParam Integer year,
                                                                    @RequestParam Integer month) {
-        // 다음 단계에서 Service의 메소드 이름도 getTeamSchedules로 변경할 예정입니다.
         List<ScheduleResponse> schedules = scheduleService.getTeamSchedules(teamId, year, month);
         return ResponseEntity.ok(schedules);
     }
 
     // 3. 팀 일정 생성
     @PostMapping("/teams/{teamId}/schedules")
-    public ResponseEntity<?> createSchedule(@PathVariable Long teamId /*, @RequestBody ... */) {
-        // TODO: Request Body DTO를 만들고, service.createSchedule() 호출 로직 구현
-        return ResponseEntity.ok(teamId + "번 팀에 일정 생성 성공");
+    public ResponseEntity<Long> createSchedule(@PathVariable Long teamId,
+                                               @RequestBody ScheduleCreateRequest request) {
+        Long scheduleId = scheduleService.createSchedule(teamId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(scheduleId);
     }
 
     // 4. 단일 일정 수정

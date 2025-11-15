@@ -3,7 +3,7 @@ package com.moau.moau.user.application;
 
 import com.moau.moau.global.exception.error.CommonError;
 import com.moau.moau.user.domain.User;
-import com.moau.moau.user.domain.repository.UserRepository;
+import com.moau.moau.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
