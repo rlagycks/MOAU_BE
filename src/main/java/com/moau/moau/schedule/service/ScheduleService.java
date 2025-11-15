@@ -11,7 +11,6 @@ import com.moau.moau.team.domain.TeamMember;
 import com.moau.moau.team.repository.TeamMemberRepository;
 import com.moau.moau.team.repository.TeamRepository;
 import com.moau.moau.user.domain.User;
-import com.moau.moau.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
