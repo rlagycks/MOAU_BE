@@ -1,8 +1,8 @@
 // src/main/java/com/moau/moau/token/presentation/LogoutController.java
-package com.moau.moau.token.presentation;
+package com.moau.moau.token.controller;
 
 import com.moau.moau.global.exception.error.CommonError;
-import com.moau.moau.token.application.TokenRefreshService;
+import com.moau.moau.token.service.TokenRefreshService;
 import com.moau.moau.token.dto.request.LogoutRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
