@@ -13,7 +13,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api")
-public class ScheduleController {
+public class ScheduleController implements ScheduleControllerSwagger{
 
     private final ScheduleService scheduleService;
 
