@@ -15,4 +15,8 @@ public class TeamMemberId implements Serializable {
     private Long groupId;
     private Long userId;
 
+    public TeamMemberId(Long groupId, Long userId) {
+        this.groupId = groupId;
+        this.userId = userId;
+    }
 }
