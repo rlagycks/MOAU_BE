@@ -1,10 +1,10 @@
 package com.moau.moau.test.controller;
 
 import com.moau.moau.jwt.ports.JwtIssuerPort;
-import com.moau.moau.token.application.TokenRefreshService;
-import com.moau.moau.user.application.UserCommandService;
+import com.moau.moau.token.service.TokenRefreshService;
+import com.moau.moau.user.service.UserCommandService;
 import com.moau.moau.user.domain.User;
-import com.moau.moau.user.dto.response.auth.CodeExchangeResponse;
+import com.moau.moau.auth.dto.response.CodeExchangeResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
