@@ -1,4 +1,4 @@
-package com.moau.moau.user.dto.response.auth;
+package com.moau.moau.auth.dto.response;
 
 import java.time.Instant;
 
