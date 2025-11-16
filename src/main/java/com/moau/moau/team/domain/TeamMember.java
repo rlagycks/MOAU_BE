@@ -12,29 +12,27 @@ import java.time.Instant;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name = "GROUP_MEMBERS")
+@Table(name = "TEAM_MEMBERS") // [✅ 수정] 대문자 복수형
 public class TeamMember {
 
-    @EmbeddedId // 위에서 만든 복합키 클래스를 ID로 사용
+    @EmbeddedId
     private TeamMemberId id;
 
-    @MapsId("groupId") // 복합키의 groupId 필드를 실제 Group 엔티티와 매핑
+    @MapsId("teamId")
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "group_id")
+    @JoinColumn(name = "TEAM_ID") // [✅ 수정] 대문자
     private Team team;
 
-    @MapsId("userId") // 복합키의 userId 필드를 실제 User 엔티티와 매핑
+    @MapsId("userId")
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "USER_ID") // [✅ 수정] 대문자
     private User user;
 
     @Column(nullable = false)
-    // @Enumerated(EnumType.STRING)
-    private String role; // ENUM 타입
+    private String role; // ENUM
 
     @Column(nullable = false)
-    // @Enumerated(EnumType.STRING)
-    private String status; // ENUM 타입
+    private String status; // ENUM
 
     @Column(name = "joined_at", nullable = false)
     private Instant joinedAt;
@@ -42,7 +40,5 @@ public class TeamMember {
     @Column(name = "updated_at")
     private Instant updatedAt;
 
-    // updatedBy는 User 엔티티와 관계를 맺을 수도 있고, Long 타입으로 ID만 저장할 수도 있습니다.
-    // 여기서는 ID만 저장하는 방식으로 구현했습니다.
     private Long updatedBy;
 }
