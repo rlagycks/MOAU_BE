@@ -1,8 +1,8 @@
 // src/main/java/com/moau/moau/token/presentation/TokenController.java
-package com.moau.moau.token.presentation;
+package com.moau.moau.token.controller;
 
 import com.moau.moau.global.exception.error.CommonError;
-import com.moau.moau.token.application.TokenRefreshService;
+import com.moau.moau.token.service.TokenRefreshService;
 import com.moau.moau.token.dto.request.RefreshRequest;
 import com.moau.moau.token.dto.response.RefreshResponse;
 import jakarta.validation.Valid;
