@@ -60,9 +60,8 @@ jobs:
               "KAKAO_REDIRECT_URIS=kakao9ec4a4d46982a8f4d7b19fcc7099c63c://oauth",
               "ENV",
 
-              "# --- compose 파일(최초 1회 생성) ---",
-              "if [ ! -f docker-compose.yml ]; then cat > docker-compose.yml <<\"YAML\"",
-              "version: \"3.8\"",
+              "# --- compose 파일 (매번 덮어쓰기) ---",
+              "cat > docker-compose.yml <<\"YAML\"",
               "services:",
               "  app:",
               "    image: ${{ env.IMAGE }}",
@@ -76,7 +75,6 @@ jobs:
               "      timeout: 5s",
               "      retries: 10",
               "YAML",
-              "fi",
 
               "aws ssm get-parameter --name ${{ env.GHCR_TOKEN_PARAMETER_NAME }} --with-decryption --query Parameter.Value --output text | sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin",
           
