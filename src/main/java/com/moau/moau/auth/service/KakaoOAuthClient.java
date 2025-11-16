@@ -1,7 +1,7 @@
-package com.moau.moau.user.application.auth;
+package com.moau.moau.auth.service;
 
-import com.moau.moau.user.dto.response.auth.kakao.KakaoTokenResponse;
-import com.moau.moau.user.dto.response.auth.kakao.KakaoUserMeResponse;
+import com.moau.moau.auth.dto.response.kakao.KakaoTokenResponse;
+import com.moau.moau.auth.dto.response.kakao.KakaoUserMeResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
