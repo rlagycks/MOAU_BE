@@ -28,16 +28,7 @@ public class TestAuthController {
             @RequestParam(defaultValue = "test@moau.com") String email
     ) {
 
-        long testKakaoId = email.hashCode() & 0xFFFFFFFFL;
-        String testNickname = "TestUser-" + email.split("@")[0];
-
-        UserCommandService.UpsertResult result = userCommandService.upsertKakaoUser(
-                testKakaoId,
-                email,
-                testNickname
-        );
-
-        User user = result.user();
+        User user = userCommandService.findOrCreateTestUser(email);
 
         var access = jwtIssuerPort.issueAccess(user.getId(), "USER");
         var refresh = jwtIssuerPort.issueRefresh(user.getId());
