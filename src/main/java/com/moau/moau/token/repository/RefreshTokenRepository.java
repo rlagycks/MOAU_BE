@@ -1,5 +1,5 @@
 // src/main/java/com/moau/moau/token/domain/repository/RefreshTokenRepository.java
-package com.moau.moau.token.domain.repository;
+package com.moau.moau.token.repository;
 
 import com.moau.moau.token.domain.RefreshToken;
 import org.springframework.data.jpa.repository.JpaRepository;
