@@ -1,5 +1,5 @@
 // src/main/java/com/moau/moau/user/dto/request/auth/CodeExchangeRequest.java
-package com.moau.moau.user.dto.request.auth;
+package com.moau.moau.auth.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 
