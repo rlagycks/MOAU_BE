@@ -1,9 +1,9 @@
 // src/main/java/com/moau/moau/user/application/UserCommandService.java
-package com.moau.moau.user.application;
+package com.moau.moau.user.service;
 
 import com.moau.moau.global.exception.error.CommonError;
 import com.moau.moau.user.domain.User;
-import com.moau.moau.user.domain.repository.UserRepository;
+import com.moau.moau.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
