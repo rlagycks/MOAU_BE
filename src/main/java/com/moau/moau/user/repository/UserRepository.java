@@ -19,15 +19,17 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // 카카오용 UPSERT (MySQL 기준)
     @Modifying
     @Query(value = """
-            INSERT INTO USERS (id, email, nickname)
-            VALUES (:id, :email, :nickname)
-            ON DUPLICATE KEY UPDATE
-                email = VALUES(email),
-                nickname = VALUES(nickname)
-            """, nativeQuery = true)
+        INSERT INTO users (id, email, nickname, created_at, updated_at)
+        VALUES (:id, :email, :nickname, NOW(), NOW())
+        ON DUPLICATE KEY UPDATE
+            email = VALUES(email),
+            nickname = VALUES(nickname),
+            updated_at = NOW()
+        """, nativeQuery = true)
     int upsertKakao(
             @Param("id") long kakaoId,
             @Param("email") String email,
             @Param("nickname") String nickname
     );
+
 }
