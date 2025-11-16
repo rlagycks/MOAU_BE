@@ -16,8 +16,8 @@ public class TeamMemberFactory {
         TeamMemberId id = new TeamMemberId();
         Instant now = Instant.now();
 
-        // 복합키 값 설정 (groupId, userId)
-        setField(id, "groupId", team.getId());   // Team의 PK
+        // 복합키 값 설정 (teamId, userId)
+        setField(id, "teamId", team.getId());   // Team의 PK
         setField(id, "userId", user.getId());   // User의 PK
 
         // TeamMember 필드 설정
