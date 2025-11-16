@@ -2,7 +2,7 @@ package com.moau.moau.schedule.service;
 
 import com.moau.moau.global.exception.BusinessException;
 import com.moau.moau.global.exception.error.CommonError;
-// import com.moau.moau.global.util.SecurityUtil; // [✅ 제거]
+import com.moau.moau.global.util.SecurityUtil;
 import com.moau.moau.schedule.domain.Schedule;
 import com.moau.moau.schedule.dto.ScheduleCreateRequest;
 import com.moau.moau.schedule.dto.ScheduleResponse;
@@ -34,19 +34,19 @@ public class ScheduleService {
     private final TeamMemberRepository teamMemberRepository;
 
     public List<ScheduleResponse> getTeamSchedules(Long teamId, int year, int month) {
-        // 팀이 존재하는지 확인하고, 없으면 BusinessException 발생
+        // 팀이 존재하는지 확인
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new BusinessException(CommonError.TEAM_NOT_FOUND));
 
-        // 시간 계산 로직
+        // 시간 계산
         YearMonth yearMonth = YearMonth.of(year, month);
         Instant startOfMonth = yearMonth.atDay(1).atStartOfDay(ZoneId.of("Asia/Seoul")).toInstant();
         Instant endOfMonth = yearMonth.atEndOfMonth().atTime(23, 59, 59).atZone(ZoneId.of("Asia/Seoul")).toInstant();
 
-        // 일정 조회 로직
+        // 일정 조회
         List<Schedule> schedules = scheduleRepository.findByTeam_IdAndStartsAtBetween(teamId, startOfMonth, endOfMonth);
 
-        // DTO 변환 로직
+        // DTO 변환
         return schedules.stream()
                 .map(ScheduleResponse::from)
                 .collect(Collectors.toList());
@@ -54,8 +54,7 @@ public class ScheduleService {
 
     @Transactional
     public Long createSchedule(Long teamId, ScheduleCreateRequest request) {
-        // [✅ 수정] SecurityUtil 대신 임시 1번 유저 사용
-        Long currentUserId = 1L;
+        Long currentUserId = SecurityUtil.getCurrentUserId();
         User creator = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다. id=" + currentUserId));
 
@@ -69,8 +68,7 @@ public class ScheduleService {
     }
 
     public List<ScheduleResponse> getMySchedules(int year, int month) {
-        // [✅ 수정] SecurityUtil 대신 임시 1번 유저 사용
-        Long currentUserId = 1L;
+        Long currentUserId = SecurityUtil.getCurrentUserId();
 
         // 1. 내가 속한 모든 팀의 ID 목록을 조회합니다.
         List<TeamMember> myTeams = teamMemberRepository.findByUserId(currentUserId);
@@ -88,10 +86,10 @@ public class ScheduleService {
         Instant startOfMonth = yearMonth.atDay(1).atStartOfDay(ZoneId.of("Asia/Seoul")).toInstant();
         Instant endOfMonth = yearMonth.atEndOfMonth().atTime(23, 59, 59).atZone(ZoneId.of("Asia/Seoul")).toInstant();
 
-        // 4. 여러 팀 ID를 사용해 일정 조회 로직
+        // 4. 여러 팀 ID를 사용해 일정 조회
         List<Schedule> schedules = scheduleRepository.findByTeam_IdInAndStartsAtBetween(myTeamIds, startOfMonth, endOfMonth);
 
-        // 5. DTO 변환 로직
+        // 5. DTO 변환
         return schedules.stream()
                 .map(ScheduleResponse::from)
                 .collect(Collectors.toList());
