@@ -1,9 +1,9 @@
 // src/main/java/com/moau/moau/user/presentation/UserController.java
-package com.moau.moau.user.presentation;
+package com.moau.moau.user.controller;
 
 import com.moau.moau.global.exception.error.CommonError;
 import com.moau.moau.jwt.ports.JwtParserPort;
-import com.moau.moau.user.application.UserQueryService;
+import com.moau.moau.user.service.UserQueryService;
 import com.moau.moau.user.dto.response.UserMeResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
