@@ -39,10 +39,10 @@ public class SecurityConfig {
                                 "/actuator/health",
                                 "/favicon.ico"
                         ).permitAll()
-                        //  로그아웃은 인증된 사용자만 가능하도록
-                        .requestMatchers("/api/auth/logout").authenticated()
-                        //  나머지 /api/** 는 전부 JWT 인증 필요
-                        .requestMatchers("/api/**").authenticated()
+                        //  로그아웃은 인증된 사용자만 가능하도록 (일단 임시로 permitAll)
+                        .requestMatchers("/api/auth/logout").permitAll() // [✅ 수정]
+                        //  나머지 /api/** 는 전부 JWT 인증 필요 -> 임시로 permitAll
+                        .requestMatchers("/api/**").permitAll() // [✅ 수정] authenticated() -> permitAll()
                         // 그 외는 전부 허용 (문서, 정적 리소스 등)
                         .anyRequest().permitAll()
                 )

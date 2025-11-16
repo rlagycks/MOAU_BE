@@ -2,6 +2,7 @@ package com.moau.moau.schedule.service;
 
 import com.moau.moau.global.exception.BusinessException;
 import com.moau.moau.global.exception.error.CommonError;
+// import com.moau.moau.global.util.SecurityUtil; // [✅ 제거]
 import com.moau.moau.schedule.domain.Schedule;
 import com.moau.moau.schedule.dto.ScheduleCreateRequest;
 import com.moau.moau.schedule.dto.ScheduleResponse;
@@ -51,12 +52,12 @@ public class ScheduleService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional // 데이터를 저장하므로 클래스 레벨의 readOnly 설정을 덮어씁니다.
+    @Transactional
     public Long createSchedule(Long teamId, ScheduleCreateRequest request) {
-        // TODO: 로그인 기능 구현 후 실제 인증된 유저 정보를 가져와야 합니다.
-        // 지금은 임시로 DB에 있는 1번 유저를 생성자로 사용합니다.
-        User creator = userRepository.findById(1L)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다. id=1"));
+        // [✅ 수정] SecurityUtil 대신 임시 1번 유저 사용
+        Long currentUserId = 1L;
+        User creator = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다. id=" + currentUserId));
 
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new BusinessException(CommonError.TEAM_NOT_FOUND));
@@ -68,9 +69,8 @@ public class ScheduleService {
     }
 
     public List<ScheduleResponse> getMySchedules(int year, int month) {
-        // TODO: 로그인 기능 구현 후 실제 인증된 유저 정보를 가져와야 합니다.
-        // 테스트를 위해 '멀티팀유저'의 ID인 2L로 변경합니다.
-        Long currentUserId = 2L; // [✅ 1L -> 2L로 수정]
+        // [✅ 수정] SecurityUtil 대신 임시 1번 유저 사용
+        Long currentUserId = 1L;
 
         // 1. 내가 속한 모든 팀의 ID 목록을 조회합니다.
         List<TeamMember> myTeams = teamMemberRepository.findByUserId(currentUserId);

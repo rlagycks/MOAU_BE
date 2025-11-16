@@ -1,26 +1,28 @@
-### 1. 팀 캘린더 조회 (성공 예상)
+### 1. 팀 캘린더 조회 (id=1인 팀)
 # @name getTeamSchedules
 GET http://localhost:8080/api/teams/1/schedules?year=2025&month=10
-# Authorization: Bearer <여기에 나중에 토큰을 넣으세요>
+# Authorization: {{accessToken}} # (인증 임시 비활성화)
 Accept: application/json
 
 ### 2. 존재하지 않는 팀 캘린더 조회 (404 에러 예상)
 GET http://localhost:8080/api/teams/999/schedules?year=2025&month=10
-# Authorization: Bearer <토큰>
+# Authorization: {{accessToken}} # (인증 임시 비활성화)
 Accept: application/json
 
-### 3. 팀 일정 생성 (성공 예상)
+### 3. 팀 일정 생성 (id=1인 팀에 생성)
 POST http://localhost:8080/api/teams/1/schedules
 Content-Type: application/json
+# Authorization: {{accessToken}} # (인증 임시 비활성화)
 
 {
-  "title": "첫번째 테스트 일정",
-  "description": "API로 만드는 첫번째 일정입니다.",
+  "title": "API로 만든 일정 (인증X)",
+  "description": "인증 없이 생성된 일정입니다.",
   "startsAt": "2025-10-10T14:00:00Z",
   "endsAt": "2025-10-10T16:00:00Z",
   "location": "온라인"
 }
 
-### 4. 내 캘린더 조회 (id=2 유저로 테스트)
+### 4. 내 캘린더 조회 (임시 1번 유저 기준)
 GET http://localhost:8080/api/schedules/me?year=2025&month=10
+# Authorization: {{accessToken}} # (인증 임시 비활성화)
 Accept: application/json
