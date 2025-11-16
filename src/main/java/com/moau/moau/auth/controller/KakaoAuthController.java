@@ -1,10 +1,10 @@
 // src/main/java/com/moau/moau/user/presentation/auth/KakaoAuthController.java
-package com.moau.moau.user.presentation.auth;
+package com.moau.moau.auth.controller;
 
 import com.moau.moau.global.exception.error.CommonError;
-import com.moau.moau.user.application.auth.KakaoAuthService;
-import com.moau.moau.user.dto.request.auth.CodeExchangeRequest;
-import com.moau.moau.user.dto.response.auth.CodeExchangeResponse;
+import com.moau.moau.auth.service.KakaoAuthService;
+import com.moau.moau.auth.dto.request.CodeExchangeRequest;
+import com.moau.moau.auth.dto.response.CodeExchangeResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
