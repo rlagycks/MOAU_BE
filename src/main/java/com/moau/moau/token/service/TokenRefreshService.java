@@ -1,18 +1,17 @@
 // src/main/java/com/moau/moau/token/application/TokenRefreshService.java
-package com.moau.moau.token.application;
+package com.moau.moau.token.service;
 
 import com.moau.moau.global.exception.error.CommonError;
 import com.moau.moau.jwt.ports.JwtIssuerPort;
 import com.moau.moau.jwt.ports.JwtParserPort;
 import com.moau.moau.token.domain.RefreshToken;
-import com.moau.moau.token.domain.repository.RefreshTokenRepository;
+import com.moau.moau.token.repository.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.MessageDigest;
 import java.time.Instant;
-import java.util.HexFormat;
 
 @Service
 @RequiredArgsConstructor
