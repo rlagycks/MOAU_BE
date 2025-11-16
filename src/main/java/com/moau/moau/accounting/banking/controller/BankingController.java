@@ -25,7 +25,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
-public class BankingController {
+public class BankingController implements BankingControllerSwagger{
 
     private final BankingCommandService bankingCommandService;
     private final BankingQueryService bankingQueryService;
