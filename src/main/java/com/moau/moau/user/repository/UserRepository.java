@@ -1,5 +1,5 @@
 // src/main/java/com/moau/moau/user/domain/repository/UserRepository.java
-package com.moau.moau.user.domain.repository;
+package com.moau.moau.user.repository;
 
 import com.moau.moau.user.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -19,7 +19,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // 카카오용 UPSERT (MySQL 기준)
     @Modifying
     @Query(value = """
-            INSERT INTO USERS (id, email, nickname)
+            INSERT INTO users (id, email, nickname)
             VALUES (:id, :email, :nickname)
             ON DUPLICATE KEY UPDATE
                 email = VALUES(email),
