@@ -3,16 +3,16 @@ package com.moau.moau.team.domain;
 
 import com.moau.moau.global.domain.BaseId;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
+import lombok.*;
 import com.moau.moau.user.domain.User;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-
+@Setter
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Builder
 @Entity
-@Table(name = "TEAM") // <-- 이 부분을 수정!
+@Table(name = "TEAMS") // <-- 이 부분을 수정!
 public class Team extends BaseId {
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -27,4 +27,6 @@ public class Team extends BaseId {
 
     @Column(name = "invite_code", length = 8, unique = true)
     private String inviteCode;
+
 }
+
