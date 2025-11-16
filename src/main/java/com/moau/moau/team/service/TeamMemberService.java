@@ -3,6 +3,7 @@ package com.moau.moau.team.service;
 
 import com.moau.moau.team.domain.Team;
 import com.moau.moau.team.domain.TeamMember;
+import com.moau.moau.team.domain.TeamMemberFactory;
 import com.moau.moau.team.domain.TeamMemberId;
 import com.moau.moau.team.dto.response.TeamMemberResponse;
 import com.moau.moau.team.repository.TeamMemberRepository;
@@ -55,16 +56,12 @@ public class TeamMemberService {
         if (teamMembers.existsById(id)) {
             return;
         }
-
-        TeamMember member = new TeamMember(
-                id,
+        TeamMember member = TeamMemberFactory.create(
                 team,
                 owner,
-                "OWNER",          // 역할
-                "ACTIVE",         // 상태
-                Instant.now(),    // joinedAt
-                Instant.now(),    // updatedAt
-                ownerUserId       // updatedBy
+                "OWNER",      // 역할
+                "ACTIVE",     // 상태
+                ownerUserId   // updatedBy
         );
 
         teamMembers.save(member);
