@@ -1,4 +1,4 @@
-package com.moau.moau.user.dto.response.auth.kakao;
+package com.moau.moau.auth.dto.response.kakao;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
