@@ -12,7 +12,7 @@ import java.time.Instant;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name = "GROUP_MEMBERS")
+@Table(name = "TEAM_MEMBERS")
 public class TeamMember {
 
     @EmbeddedId // 위에서 만든 복합키 클래스를 ID로 사용
@@ -45,4 +45,17 @@ public class TeamMember {
     // updatedBy는 User 엔티티와 관계를 맺을 수도 있고, Long 타입으로 ID만 저장할 수도 있습니다.
     // 여기서는 ID만 저장하는 방식으로 구현했습니다.
     private Long updatedBy;
+
+    public TeamMember(TeamMemberId id, Team team, User user,
+                      String role, String status,
+                      Instant joinedAt, Instant updatedAt, Long updatedBy) {
+        this.id = id;
+        this.team = team;
+        this.user = user;
+        this.role = role;
+        this.status = status;
+        this.joinedAt = joinedAt;
+        this.updatedAt = updatedAt;
+        this.updatedBy = updatedBy;
+    }
 }
