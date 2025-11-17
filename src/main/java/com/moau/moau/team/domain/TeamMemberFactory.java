@@ -9,7 +9,7 @@ import java.time.Instant;
 public class TeamMemberFactory {
 
     public static TeamMember create(Team team, User user,
-                                    String role, String status, Long updatedBy) {
+                                    String role, TeamMemberStatus  status, Long updatedBy) {
 
         // 엔티티와 ID는 같은 패키지라서 protected 생성자 호출 가능
         TeamMember member = new TeamMember();
