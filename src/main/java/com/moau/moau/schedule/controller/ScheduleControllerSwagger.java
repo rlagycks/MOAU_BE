@@ -16,7 +16,7 @@ public interface ScheduleControllerSwagger {
     @Operation(summary = "내 캘린더 조회 (통합)",
             description = "내가 속한 모든 팀의 일정을 포함한 '내 캘린더'를 월별로 조회합니다.")
     @Parameter(name = "year", description = "조회할 연도", example = "2025")
-    @Parameter(name = "month", description = "조회할 월", example = "11")
+    @Parameter(name = "month", description = "조회할 월", example = "10")
     ResponseEntity<List<ScheduleResponse>> getMySchedules(
             @RequestParam Integer year,
             @RequestParam Integer month
@@ -26,7 +26,7 @@ public interface ScheduleControllerSwagger {
             description = "특정 팀(모임)의 캘린더를 월별로 조회합니다.")
     @Parameter(name = "teamId", description = "조회할 팀 ID", example = "1")
     @Parameter(name = "year", description = "조회할 연도", example = "2025")
-    @Parameter(name = "month", description = "조회할 월", example = "11")
+    @Parameter(name = "month", description = "조회할 월", example = "10")
     ResponseEntity<List<ScheduleResponse>> getTeamSchedules(
             @PathVariable Long teamId,
             @RequestParam Integer year,
