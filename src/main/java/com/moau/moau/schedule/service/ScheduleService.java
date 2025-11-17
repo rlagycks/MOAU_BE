@@ -2,6 +2,7 @@ package com.moau.moau.schedule.service;
 
 import com.moau.moau.global.exception.BusinessException;
 import com.moau.moau.global.exception.error.CommonError;
+import com.moau.moau.global.util.SecurityUtil;
 import com.moau.moau.schedule.domain.Schedule;
 import com.moau.moau.schedule.dto.ScheduleCreateRequest;
 import com.moau.moau.schedule.dto.ScheduleResponse;
@@ -33,30 +34,49 @@ public class ScheduleService {
     private final TeamMemberRepository teamMemberRepository;
 
     public List<ScheduleResponse> getTeamSchedules(Long teamId, int year, int month) {
-        // 팀이 존재하는지 확인하고, 없으면 BusinessException 발생
+        // 1. [추가] 현재 유저 ID를 가져옵니다.
+        Long currentUserId = SecurityUtil.getCurrentUserId();
+
+        // 2. 팀이 존재하는지 확인
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new BusinessException(CommonError.TEAM_NOT_FOUND));
 
-        // 시간 계산 로직
+        // 3. [핵심 로직 추가] 현재 유저가 해당 팀의 멤버인지 확인
+        boolean isMember = teamMemberRepository.existsByTeam_IdAndUser_Id(teamId, currentUserId);
+
+        if (!isMember) {
+            // 멤버가 아니면 403 Forbidden 예외를 발생시킵니다.
+            throw new BusinessException(CommonError.ACCESS_DENIED);
+        }
+
+        // 4. 시간 계산
         YearMonth yearMonth = YearMonth.of(year, month);
         Instant startOfMonth = yearMonth.atDay(1).atStartOfDay(ZoneId.of("Asia/Seoul")).toInstant();
         Instant endOfMonth = yearMonth.atEndOfMonth().atTime(23, 59, 59).atZone(ZoneId.of("Asia/Seoul")).toInstant();
 
-        // 일정 조회 로직
+        // 5. 일정 조회 (멤버십이 확인되었으므로 안전함)
         List<Schedule> schedules = scheduleRepository.findByTeam_IdAndStartsAtBetween(teamId, startOfMonth, endOfMonth);
 
-        // DTO 변환 로직
+        // 6. DTO 변환
         return schedules.stream()
                 .map(ScheduleResponse::from)
                 .collect(Collectors.toList());
     }
 
-    @Transactional // 데이터를 저장하므로 클래스 레벨의 readOnly 설정을 덮어씁니다.
+    @Transactional
     public Long createSchedule(Long teamId, ScheduleCreateRequest request) {
-        // TODO: 로그인 기능 구현 후 실제 인증된 유저 정보를 가져와야 합니다.
-        // 지금은 임시로 DB에 있는 1번 유저를 생성자로 사용합니다.
-        User creator = userRepository.findById(1L)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다. id=1"));
+        Long currentUserId = SecurityUtil.getCurrentUserId();
+
+        // [추가된 보안 로직 시작] 현재 유저가 해당 팀의 멤버인지 확인
+        boolean isMember = teamMemberRepository.existsByTeam_IdAndUser_Id(teamId, currentUserId);
+        if (!isMember) {
+            // 멤버가 아니면 403 Forbidden 예외를 발생시킵니다.
+            throw new BusinessException(CommonError.ACCESS_DENIED);
+        }
+        // [추가된 보안 로직 끝]
+
+        User creator = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다. id=" + currentUserId));
 
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new BusinessException(CommonError.TEAM_NOT_FOUND));
@@ -68,11 +88,9 @@ public class ScheduleService {
     }
 
     public List<ScheduleResponse> getMySchedules(int year, int month) {
-        // TODO: 로그인 기능 구현 후 실제 인증된 유저 정보를 가져와야 합니다.
-        // 테스트를 위해 '멀티팀유저'의 ID인 2L로 변경합니다.
-        Long currentUserId = 2L; // [✅ 1L -> 2L로 수정]
+        Long currentUserId = SecurityUtil.getCurrentUserId();
 
-        // 1. 내가 속한 모든 팀의 ID 목록을 조회합니다.
+        // 1. 내가 속한 모든 팀의 ID 목록을 조회합니다. (이 로직 자체가 보안 필터 역할을 함)
         List<TeamMember> myTeams = teamMemberRepository.findByUserId(currentUserId);
         List<Long> myTeamIds = myTeams.stream()
                 .map(teamMember -> teamMember.getTeam().getId())
@@ -88,10 +106,10 @@ public class ScheduleService {
         Instant startOfMonth = yearMonth.atDay(1).atStartOfDay(ZoneId.of("Asia/Seoul")).toInstant();
         Instant endOfMonth = yearMonth.atEndOfMonth().atTime(23, 59, 59).atZone(ZoneId.of("Asia/Seoul")).toInstant();
 
-        // 4. 여러 팀 ID를 사용해 일정 조회 로직
+        // 4. 여러 팀 ID를 사용해 일정 조회
         List<Schedule> schedules = scheduleRepository.findByTeam_IdInAndStartsAtBetween(myTeamIds, startOfMonth, endOfMonth);
 
-        // 5. DTO 변환 로직
+        // 5. DTO 변환
         return schedules.stream()
                 .map(ScheduleResponse::from)
                 .collect(Collectors.toList());

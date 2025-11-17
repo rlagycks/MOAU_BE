@@ -6,6 +6,7 @@ on:
 env:
   AWS_REGION: ap-northeast-2
   IMAGE: ghcr.io/rlagycks/moau_be:latest
+  GHCR_TOKEN_PARAMETER_NAME: "github-ghcr-token"
 
 jobs:
   deploy:
@@ -43,31 +44,40 @@ jobs:
               "sudo mkdir -p /srv/moau && sudo chown $USER:$USER /srv/moau",
               "cd /srv/moau",
 
-              "# --- .env 생성(Secrets → 런타임 주입) ---",
+              "# --- .env 생성 ---",
               "cat > .env <<\"ENV\"",
               "SPRING_PROFILES_ACTIVE=prod",
+          
+              "# --- RDS ---",
               "RDS_ENDPOINT=${{ secrets.RDS_ENDPOINT }}",
               "RDS_DB=${{ secrets.RDS_DB }}",
               "RDS_USER=${{ secrets.RDS_USER }}",
               "RDS_PASS=${{ secrets.RDS_PASS }}",
+          
+              "# --- AWS ---",
               "AWS_REGION=${{ secrets.AWS_REGION }}",
               "AWS_S3_BUCKET=${{ secrets.AWS_S3_BUCKET }}",
-              "JWT_SECRET=${{ secrets.JWT_SECRET }}",
-              "KAKAO_REST_API_KEY=${{ secrets.KAKAO_REST_API_KEY }}",
-              "KAKAO_TOKEN_URI=https://kauth.kakao.com/oauth/token",
-              "KAKAO_USER_ME_URI=https://kapi.kakao.com/v2/user/me",
-              "KAKAO_REDIRECT_URIS=kakao9ec4a4d46982a8f4d7b19fcc7099c63c://oauth",
+          
+              "# --- JWT  ---",
+              "SPRING_SECURITY_JWT_SECRET=${{ secrets.JWT_SECRET }}",
+              "SPRING_SECURITY_JWT_ACCESSTOKENEXPIRATIONMSEC=${{ secrets.JWT_ACCESS_TOKEN_EXPIRATION_MSEC }}",
+              "SPRING_SECURITY_JWT_REFRESHTOKENEXPIRATIONMSEC=${{ secrets.JWT_REFRESH_TOKEN_EXPIRATION_MSEC }}",
+          
+              "# --- Kakao  ---",
+              "APP_KAKAO_REST_API_KEY=${{ secrets.KAKAO_REST_API_KEY }}",
+              "APP_KAKAO_TOKEN_URI=${{ secrets.KAKAO_TOKEN_URI }}",
+              "APP_KAKAO_USER_ME_URI=${{ secrets.KAKAO_USER_ME_URI }}",
+              "APP_KAKAO_REDIRECT_URIS_0=${{ secrets.KAKAO_REDIRECT_URIS }}",
               "ENV",
 
-              "# --- compose 파일(최초 1회 생성) ---",
-              "if [ ! -f docker-compose.yml ]; then cat > docker-compose.yml <<\"YAML\"",
-              "version: \"3.8\"",
+              "# --- compose 파일 (매번 덮어쓰기) ---",
+              "cat > docker-compose.yml <<\"YAML\"",
               "services:",
               "  app:",
               "    image: ${{ env.IMAGE }}",
               "    container_name: moau-app",
               "    restart: unless-stopped",
-              "    ports: [\"80:8080\"]",
+              "    ports: [\"8080:8080\"]",
               "    env_file: [.env]",
               "    healthcheck:",
               "      test: [\"CMD\", \"wget\", \"-qO-\", \"http://localhost:8080/actuator/health\"]",
@@ -75,9 +85,9 @@ jobs:
               "      timeout: 5s",
               "      retries: 10",
               "YAML",
-              "fi",
 
-              "echo \"${{ secrets.GITHUB_TOKEN }}\" | sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin",
+              "aws ssm get-parameter --name ${{ env.GHCR_TOKEN_PARAMETER_NAME }} --with-decryption --query Parameter.Value --output text | sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin",
+          
               "sudo docker compose pull",
               "sudo docker compose up -d",
               "sudo docker image prune -f"
