@@ -2,12 +2,13 @@
 package com.moau.moau.team.dto.response;
 
 import com.moau.moau.team.domain.TeamMember;
+import com.moau.moau.team.domain.TeamMemberStatus;
 
 public record TeamMemberResponse(
         Long userId,
         String nickname,
         String role,
-        String status
+        TeamMemberStatus status
 ) {
     public static TeamMemberResponse from(TeamMember m) {
         return new TeamMemberResponse(
@@ -17,4 +18,5 @@ public record TeamMemberResponse(
                 m.getStatus()
         );
     }
+
 }
