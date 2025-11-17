@@ -1,6 +1,7 @@
 package com.moau.moau.team.domain;
 
 import com.moau.moau.global.domain.BaseId;
+import com.moau.moau.global.domain.BaseSoftDelete;
 import jakarta.persistence.*;
 import lombok.*;
 import com.moau.moau.user.domain.User;
@@ -12,7 +13,7 @@ import com.moau.moau.user.domain.User;
 @Builder
 @Entity
 @Table(name = "TEAMS") // [ 수정] "TEAMS" (대문자 복수형)
-public class Team extends BaseId {
+public class Team extends BaseSoftDelete {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_user_id", nullable = false)
