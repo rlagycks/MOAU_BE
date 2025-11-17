@@ -13,10 +13,14 @@ import java.io.Serializable;
 @EqualsAndHashCode
 public class TeamMemberId implements Serializable {
 
-    @Column(name = "TEAM_ID") // [✅ 수정] 대문자
+    @Column(name = "TEAM_ID") // [ 수정] 대문자
     private Long teamId;
 
-    @Column(name = "USER_ID") // [✅ 수정] 대문자
+    @Column(name = "USER_ID") // [ 수정] 대문자
     private Long userId;
 
+    public TeamMemberId(Long teamId, Long userId) {
+        this.teamId = teamId;
+        this.userId = userId;
+    }
 }
