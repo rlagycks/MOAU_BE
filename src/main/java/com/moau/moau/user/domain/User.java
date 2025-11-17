@@ -1,34 +1,37 @@
 // src/main/java/com/moau/moau/user/domain/User.java
 package com.moau.moau.user.domain;
 
-import com.moau.moau.global.domain.BaseSoftDelete; // created_at, updated_at, deleted_at 포함 가정
+import com.moau.moau.global.domain.BaseSoftDelete;
 import jakarta.persistence.*;
 import lombok.*;
 
-/**
- * USERS.id = Kakao user id (외부 PK, AUTO_INCREMENT 금지)
- * email UNIQUE, nickname NOT NULL, status ENUM, soft delete 지원(BaseSoftDelete)
- */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(
         name = "users",
         uniqueConstraints = {
-                @UniqueConstraint(name = "uk_users_email", columnNames = "email")
+                @UniqueConstraint(name = "uk_users_email", columnNames = "email"),
+                @UniqueConstraint(name = "uk_users_kakao_id", columnNames = "kakao_id")
         },
         indexes = {
-                @Index(name = "idx_users_deleted_at", columnList = "deleted_at") // BaseSoftDelete가 deleted_at 매핑한다고 가정
+                @Index(name = "idx_users_deleted_at", columnList = "deleted_at"),
+                @Index(name = "idx_users_kakao_id", columnList = "kakao_id")
         }
 )
 public class User extends BaseSoftDelete {
 
     public enum Status { ACTIVE, SUSPENDED, DEACTIVATED }
 
-    /** PK = 카카오 user id (외부에서 주입, 자동생성 금지) */
+    /** 서비스 내부 PK (AUTO_INCREMENT) */
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
+
+    /** 카카오에서 내려오는 user id (외부 식별자, PK 아님) */
+    @Column(name = "kakao_id", nullable = false)
+    private Long kakaoId;
 
     /** 이메일은 저장 시 소문자 정규화 */
     @Column(name = "email", nullable = false, length = 255)
@@ -42,17 +45,19 @@ public class User extends BaseSoftDelete {
     private Status status = Status.ACTIVE;
 
     @Builder
-    private User(Long id, String email, String nickname, Status status) {
-        this.id = id;
+    private User(Long kakaoId, String email, String nickname, Status status) {
+        this.kakaoId = kakaoId;
         this.email = email;
         this.nickname = nickname;
-        if (status != null) this.status = status;
+        if (status != null) {
+            this.status = status;
+        }
     }
 
     /** 최초 소셜 가입용 팩토리 */
     public static User createWithKakao(Long kakaoId, String email, String nickname) {
         return User.builder()
-                .id(kakaoId)
+                .kakaoId(kakaoId)
                 .email(email)
                 .nickname(nickname != null ? nickname : ("user_" + kakaoId))
                 .status(Status.ACTIVE)
@@ -60,15 +65,30 @@ public class User extends BaseSoftDelete {
     }
 
     // 업데이트용 도메인 메서드
-    public void changeNickname(String nickname) { this.nickname = nickname; }
-    public void changeEmail(String email) { this.email = email; }
-    public void suspend() { this.status = Status.SUSPENDED; }
-    public void deactivate() { this.status = Status.DEACTIVATED; }
+    public void changeNickname(String nickname) {
+        this.nickname = nickname;
+    }
 
-    /** 저장/업데이트 시 정규화 */
-    @PrePersist @PreUpdate
+    public void changeEmail(String email) {
+        this.email = email;
+    }
+
+    public void suspend() {
+        this.status = Status.SUSPENDED;
+    }
+
+    public void deactivate() {
+        this.status = Status.DEACTIVATED;
+    }
+
+    @PrePersist
+    @PreUpdate
     private void normalize() {
-        if (this.email != null) this.email = this.email.trim().toLowerCase();
-        if (this.nickname != null) this.nickname = this.nickname.trim();
+        if (this.email != null) {
+            this.email = this.email.trim().toLowerCase();
+        }
+        if (this.nickname != null) {
+            this.nickname = this.nickname.trim();
+        }
     }
 }
