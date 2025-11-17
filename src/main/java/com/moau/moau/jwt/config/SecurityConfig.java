@@ -58,7 +58,6 @@ public class SecurityConfig {
                         // (3) 위에서 허용한 URL을 제외한 모든 요청은 인증 필요
                         .anyRequest().authenticated()
                 )
-                //  불필요한 oauth2Login 제거 (앱 교환 방식에서는 사용하지 않음)
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
