@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
+import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
@@ -54,6 +55,7 @@ public class TeamCommandService {
         return TeamDetailResponse.from(team);
     }
 
+    // TeamCommandService
     @Transactional
     public void deleteTeam(Long currentUserId, Long teamId) {
         Team team = teams.findById(teamId)
@@ -63,14 +65,15 @@ public class TeamCommandService {
             throw new IllegalStateException("팀 삭제 권한이 없습니다.");
         }
 
-        teams.delete(team);
+        // 소프트 딜리트: 실제 delete() 안 하고 마킹만
+        teams.softDeleteById(teamId, Instant.now());
     }
 
     private String generateUniqueInviteCode() {
         String code;
         do {
             code = generateInviteCode();
-        } while (teams.existsByInviteCode(code));
+        } while (teams.existsByInviteCodeAndDeletedAtIsNull(code));
         return code;
     }
 
