@@ -6,6 +6,7 @@ import com.moau.moau.team.dto.request.TeamCreateRequest;
 import com.moau.moau.team.dto.request.TeamUpdateRequest;
 import com.moau.moau.team.dto.response.TeamDetailResponse;
 import com.moau.moau.team.dto.response.TeamResponse;
+
 import com.moau.moau.team.service.TeamCommandService;
 import com.moau.moau.team.service.TeamQueryService;
 import jakarta.validation.Valid;
@@ -19,7 +20,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/teams")
-public class TeamController {
+public class TeamController implements TeamContollerSwagger{
 
     private final TeamCommandService teamCommands;
     private final TeamQueryService teamQueries;
@@ -40,7 +41,7 @@ public class TeamController {
             @RequestHeader("Authorization") String auth
     ) {
         Long userId = extractUserId(auth);
-        return ResponseEntity.ok(teamQueries.getOwnedTeams(userId));
+        return ResponseEntity.ok(teamQueries.getMyTeams(userId));
     }
 
     @GetMapping("/{teamId}")
