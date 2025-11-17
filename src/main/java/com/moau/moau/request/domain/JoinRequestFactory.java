@@ -1,6 +1,7 @@
 // src/main/java/com/moau/moau/team/domain/JoinRequestFactory.java
-package com.moau.moau.team.domain;
+package com.moau.moau.request.domain;
 
+import com.moau.moau.team.domain.Team;
 import com.moau.moau.user.domain.User;
 
 import java.lang.reflect.Field;
