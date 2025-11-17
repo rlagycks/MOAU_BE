@@ -1,33 +1,19 @@
-// src/main/java/com/moau/moau/user/domain/repository/UserRepository.java
+// src/main/java/com/moau/moau/user/repository/UserRepository.java
 package com.moau.moau.user.repository;
 
 import com.moau.moau.user.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
+    // 카카오 id로 조회 (이제 가장 중요한 메서드)
+    Optional<User> findByKakaoId(Long kakaoId);
+
+    // 이메일로 조회 (필요시 사용)
     Optional<User> findByEmail(String email);
 
-    // soft delete 안 된 유저만 조회 (User에 deletedAt 필드 있다고 가정)
+    // soft delete 안 된 유저만 조회
     Optional<User> findByIdAndDeletedAtIsNull(Long id);
-
-    // 카카오용 UPSERT (MySQL 기준)
-    @Modifying
-    @Query(value = """
-            INSERT INTO users (id, email, nickname)
-            VALUES (:id, :email, :nickname)
-            ON DUPLICATE KEY UPDATE
-                email = VALUES(email),
-                nickname = VALUES(nickname)
-            """, nativeQuery = true)
-    int upsertKakao(
-            @Param("id") long kakaoId,
-            @Param("email") String email,
-            @Param("nickname") String nickname
-    );
 }
