@@ -1,10 +1,10 @@
-// src/main/java/com/moau/moau/team/application/TeamJoinRequestService.java
-package com.moau.moau.team.service;
+// src/main/java/com/moau/moau/team/service/TeamJoinRequestService.java
+package com.moau.moau.request.service;
 
-import com.moau.moau.team.domain.JoinRequest;
-import com.moau.moau.team.domain.JoinRequestFactory;
+import com.moau.moau.request.domain.JoinRequest;
+import com.moau.moau.request.domain.JoinRequestFactory;
 import com.moau.moau.team.domain.Team;
-import com.moau.moau.team.repository.JoinRequestRepository;
+import com.moau.moau.request.repository.JoinRequestRepository;
 import com.moau.moau.team.repository.TeamMemberRepository;
 import com.moau.moau.team.repository.TeamRepository;
 import com.moau.moau.user.domain.User;
@@ -22,11 +22,14 @@ public class TeamJoinRequestService {
     private final JoinRequestRepository joinRequests;
     private final TeamMemberRepository teamMembers;
 
+    /**
+     * 초대코드로 가입 신청
+     */
     @Transactional
-    public void requestJoin(Long teamId, Long userId) {
-        // 그룹 조회
-        Team team = teams.findById(teamId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 그룹을 찾을 수 없습니다."));
+    public void requestJoinByInviteCode(String inviteCode, Long userId) {
+        // 초대코드로 그룹 조회
+        Team team = teams.findByInviteCodeAndDeletedAtIsNull(inviteCode)
+                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 초대 코드입니다."));
 
         // 신청자 조회
         User user = users.findById(userId)
