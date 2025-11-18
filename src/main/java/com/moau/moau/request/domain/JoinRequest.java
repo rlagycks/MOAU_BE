@@ -25,8 +25,9 @@ public class JoinRequest extends BaseId {
     @JoinColumn(name = "REQUEST_USER_ID", nullable = false) // [✅ 수정] 대문자
     private User requestUser;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String status; // ENUM 타입
+    private JoinRequestStatus status; // ENUM 타입
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "DECIDED_BY") // [✅ 수정] 대문자
