@@ -19,6 +19,14 @@ spring:
       secret: ${CI_JWT_SECRET}
       access-token-expiration-msec: 900000
       refresh-token-expiration-msec: 1209600000
+
+  cloud:
+    aws:
+      s3:
+        bucket: ${AWS_S3_BUCKET}
+      region:
+        static: ${AWS_REGION}
+
 app:
   kakao:
     rest-api-key: ${CI_KAKAO_KEY}
@@ -27,10 +35,10 @@ app:
     redirect-uris:
       - "kakao9ec4a4d46982a8f4d7b19fcc7099c63c://oauth"
 
+  naver:
+    ocr:
+      api-url: ${APP_NAVER_OCR_API_URL}
+      secret-key: ${APP_NAVER_OCR_SECRET_KEY}
 
-cloud:
-  aws:
-    region:
-      static: ${CI_AWS_REGION}
-    s3:
-      bucket: ${CI_AWS_BUCKET}
+  openai:
+    api-key: ${APP_OPENAI_API_KEY}
