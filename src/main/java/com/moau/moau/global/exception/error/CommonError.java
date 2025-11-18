@@ -11,6 +11,8 @@ public enum CommonError implements BaseError {
     // [ 이 부분을 추가해주세요]
     TEAM_NOT_FOUND(HttpStatus.NOT_FOUND, "TEAM_NOT_FOUND", "팀을 찾을 수 없습니다."),
 
+    BAD_REQUEST(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "잘못된 요청입니다."),
+
     LOGOUT_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "LOGOUT_UNAUTHORIZED", "로그아웃 요청이 인증되지 않았습니다."),
 
     REFRESH_TOKEN_INVALID_TYPE(HttpStatus.BAD_REQUEST, "REFRESH_TOKEN_INVALID_TYPE", "리프레시 토큰이 아닙니다."),

@@ -44,6 +44,9 @@ public class Receipt extends BaseId {
     @Column(name = "ocr_transaction_date")
     private LocalDate ocrTransactionDate;
 
+    @Column(name = "ocr_payment_method")
+    private String ocrPaymentMethod;
+
     @Builder
     public Receipt(Long teamId, Long uploaderId, String s3Key, String imageUrl, String description) {
         this.teamId = teamId;
@@ -51,14 +54,14 @@ public class Receipt extends BaseId {
         this.s3Key = s3Key;
         this.imageUrl = imageUrl;
         this.description = description;
-        this.ocrStatus = OcrStatus.PENDING; // 생성 시 PENDING
+        this.ocrStatus = OcrStatus.PENDING;
     }
 
-    // (OCR 성공/실패 시 업데이트용 메서드)
-    public void updateOcrResult(OcrStatus status, String merchant, Long amount, LocalDate date) {
+    public void updateOcrResult(OcrStatus status, String merchant, Long amount, LocalDate date, String paymentMethod) {
         this.ocrStatus = status;
         this.ocrMerchantName = merchant;
         this.ocrAmountCents = amount;
         this.ocrTransactionDate = date;
+        this.ocrPaymentMethod = paymentMethod; // 저장
     }
 }

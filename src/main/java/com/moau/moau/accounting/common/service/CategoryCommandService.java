@@ -3,7 +3,7 @@ package com.moau.moau.accounting.common.service;
 import com.moau.moau.accounting.common.domain.Category;
 import com.moau.moau.accounting.common.dto.request.CategoryRequestDto;
 import com.moau.moau.accounting.common.dto.response.CategoryResponseDto;
-import com.moau.moau.accounting.common.exception.CategoryError; // (새로 임포트)
+import com.moau.moau.global.exception.error.CategoryError;
 import com.moau.moau.accounting.common.repository.CategoryRepository;
 import com.moau.moau.global.exception.BusinessException;
 import com.moau.moau.global.exception.error.CommonError;
