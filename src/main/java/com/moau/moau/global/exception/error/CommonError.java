@@ -11,6 +11,7 @@ public enum CommonError implements BaseError {
     TEAM_NOT_FOUND(HttpStatus.NOT_FOUND, "TEAM_NOT_FOUND", "팀을 찾을 수 없습니다."),
 
     SCHEDULE_NOT_FOUND(HttpStatus.NOT_FOUND, "SCHEDULE_NOT_FOUND", "일정을 찾을 수 없습니다."),
+    BAD_REQUEST(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "잘못된 요청입니다."),
 
     LOGOUT_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "LOGOUT_UNAUTHORIZED", "로그아웃 요청이 인증되지 않았습니다."),
 
