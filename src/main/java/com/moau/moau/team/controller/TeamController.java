@@ -1,12 +1,12 @@
 package com.moau.moau.team.controller;
 
-import com.moau.moau.global.exception.error.CommonError;
-import com.moau.moau.jwt.ports.JwtParserPort;
+import com.moau.moau.global.security.SecurityUtil;
+import com.moau.moau.global.security.CheckTeamRole;
+import com.moau.moau.team.domain.TeamMemberRole;
 import com.moau.moau.team.dto.request.TeamCreateRequest;
 import com.moau.moau.team.dto.request.TeamUpdateRequest;
 import com.moau.moau.team.dto.response.TeamDetailResponse;
 import com.moau.moau.team.dto.response.TeamResponse;
-
 import com.moau.moau.team.service.TeamCommandService;
 import com.moau.moau.team.service.TeamQueryService;
 import jakarta.validation.Valid;
@@ -20,77 +20,52 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/teams")
-public class TeamController implements TeamContollerSwagger{
+public class TeamController implements TeamControllerSwagger {
 
     private final TeamCommandService teamCommands;
     private final TeamQueryService teamQueries;
-    private final JwtParserPort jwtParser;
 
     @PostMapping
     public ResponseEntity<TeamDetailResponse> createTeam(
-            @RequestHeader("Authorization") String auth,
             @RequestBody @Valid TeamCreateRequest req
     ) {
-        Long userId = extractUserId(auth);
+        Long userId = SecurityUtil.getCurrentUserId();
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(teamCommands.createTeam(userId, req));
     }
 
     @GetMapping
-    public ResponseEntity<List<TeamResponse>> getTeams(
-            @RequestHeader("Authorization") String auth
-    ) {
-        Long userId = extractUserId(auth);
+    public ResponseEntity<List<TeamResponse>> getTeams() {
+        Long userId = SecurityUtil.getCurrentUserId();
         return ResponseEntity.ok(teamQueries.getMyTeams(userId));
     }
 
     @GetMapping("/{teamId}")
+    @CheckTeamRole(TeamMemberRole.MEMBER) // [적용] 멤버만 조회 가능
     public ResponseEntity<TeamDetailResponse> getTeamDetail(
-            @RequestHeader("Authorization") String auth,
             @PathVariable Long teamId
     ) {
-        Long userId = extractUserId(auth);
+        Long userId = SecurityUtil.getCurrentUserId();
         return ResponseEntity.ok(teamQueries.getTeamDetail(userId, teamId));
     }
 
     @PutMapping("/{teamId}")
+    @CheckTeamRole(TeamMemberRole.OWNER) // [적용] 오너만 수정 가능
     public ResponseEntity<TeamDetailResponse> updateTeam(
-            @RequestHeader("Authorization") String auth,
             @PathVariable Long teamId,
             @RequestBody @Valid TeamUpdateRequest req
     ) {
-        Long userId = extractUserId(auth);
+        Long userId = SecurityUtil.getCurrentUserId();
         return ResponseEntity.ok(teamCommands.updateTeam(userId, teamId, req));
     }
 
     @DeleteMapping("/{teamId}")
+    @CheckTeamRole(TeamMemberRole.OWNER) // [적용] 오너만 삭제 가능
     public ResponseEntity<Void> deleteTeam(
-            @RequestHeader("Authorization") String auth,
             @PathVariable Long teamId
     ) {
-        Long userId = extractUserId(auth);
+        Long userId = SecurityUtil.getCurrentUserId();
         teamCommands.deleteTeam(userId, teamId);
         return ResponseEntity.noContent().build();
-    }
-
-    private Long extractUserId(String authorization) {
-        if (authorization == null || authorization.isBlank()) {
-            throw new IllegalArgumentException(CommonError.AUTH_HEADER_MISSING.getMessage());
-        }
-        if (!authorization.startsWith("Bearer ")) {
-            throw new IllegalArgumentException(CommonError.AUTH_HEADER_INVALID.getMessage());
-        }
-
-        String jwt = authorization.substring(7);
-        JwtParserPort.Parsed parsed = jwtParser.parse(jwt);
-        if (parsed == null || parsed.subject() == null || parsed.subject().isBlank()) {
-            throw new IllegalStateException(CommonError.AUTH_SUBJECT_MISSING.getMessage());
-        }
-
-        try {
-            return Long.parseLong(parsed.subject());
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException(CommonError.AUTH_SUBJECT_INVALID.getMessage());
-        }
     }
 }

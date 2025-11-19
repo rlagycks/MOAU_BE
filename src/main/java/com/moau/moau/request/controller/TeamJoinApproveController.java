@@ -1,9 +1,8 @@
-// src/main/java/com/moau/moau/team/controller/TeamJoinApproveController.java
 package com.moau.moau.request.controller;
 
-import com.moau.moau.accounting.banking.controller.BankingControllerSwagger;
-import com.moau.moau.global.exception.error.CommonError;
-import com.moau.moau.jwt.ports.JwtParserPort;
+import com.moau.moau.global.security.SecurityUtil;
+import com.moau.moau.global.security.CheckTeamRole;
+import com.moau.moau.team.domain.TeamMemberRole;
 import com.moau.moau.request.dto.request.TeamJoinByCodeRequest;
 import com.moau.moau.request.dto.response.TeamJoinPendingResponse;
 import com.moau.moau.request.service.TeamJoinApproveService;
@@ -22,81 +21,42 @@ public class TeamJoinApproveController implements TeamJoinApproveControllerSwagg
 
     private final TeamJoinRequestService requestService;
     private final TeamJoinApproveService approveService;
-    private final JwtParserPort jwtParser;
 
-    /**
-     * 가입 신청 (초대코드)
-     */
     @PostMapping
     public ResponseEntity<?> requestJoin(
-            @RequestBody @Valid TeamJoinByCodeRequest req,
-            @RequestHeader("Authorization") String authorization
+            @RequestBody @Valid TeamJoinByCodeRequest req
     ) {
-        Long userId = extractUserId(authorization);
+        Long userId = SecurityUtil.getCurrentUserId(); // [수정]
         requestService.requestJoinByInviteCode(req.inviteCode(), userId);
         return ResponseEntity.ok("가입 신청이 접수되었습니다.");
     }
 
-    /**
-     * PENDING 목록 조회
-     */
-    @GetMapping
+    @GetMapping("/{teamId}")
+    @CheckTeamRole(TeamMemberRole.ADMIN) // [적용]
     public ResponseEntity<List<TeamJoinPendingResponse>> getPending(
-            @RequestParam("teamId") Long teamId,
-            @RequestHeader("Authorization") String authorization
+            @PathVariable Long teamId
     ) {
-        Long actorUserId = extractUserId(authorization);
-        List<TeamJoinPendingResponse> list = requestService.getPendingRequests(actorUserId, teamId);
+        List<TeamJoinPendingResponse> list = requestService.getPendingRequests(teamId);
         return ResponseEntity.ok(list);
     }
 
-    /**
-     * 승인
-     */
-    @PostMapping("/{requestId}/approve")
+    @PostMapping("/{teamId}/{requestId}/approve")
+    @CheckTeamRole(TeamMemberRole.ADMIN) // [적용]
     public ResponseEntity<?> approve(
-            @PathVariable Long requestId,
-            @RequestHeader("Authorization") String authorization
+            @PathVariable Long teamId,
+            @PathVariable Long requestId
     ) {
-        Long approverUserId = extractUserId(authorization);
-        approveService.approve(requestId, approverUserId);
+        approveService.approve(requestId);
         return ResponseEntity.ok("가입 신청이 승인되었습니다.");
     }
 
-    /**
-     * 거절
-     */
-    @PostMapping("/{requestId}/reject")
+    @PostMapping("/{teamId}/{requestId}/reject")
+    @CheckTeamRole(TeamMemberRole.ADMIN) // [적용]
     public ResponseEntity<?> reject(
-            @PathVariable Long requestId,
-            @RequestHeader("Authorization") String authorization
+            @PathVariable Long teamId,
+            @PathVariable Long requestId
     ) {
-        Long approverUserId = extractUserId(authorization);
-        approveService.reject(requestId, approverUserId);
+        approveService.reject(requestId);
         return ResponseEntity.ok("가입 신청이 거절되었습니다.");
-    }
-
-    /**
-     * JWT → userId 추출 (네 코드 그대로)
-     */
-    private Long extractUserId(String authorization) {
-        if (authorization == null || authorization.isBlank()) {
-            throw new IllegalArgumentException(CommonError.AUTH_HEADER_MISSING.getMessage());
-        }
-        if (!authorization.startsWith("Bearer ")) {
-            throw new IllegalArgumentException(CommonError.AUTH_HEADER_INVALID.getMessage());
-        }
-
-        String jwt = authorization.substring(7);
-        JwtParserPort.Parsed parsed = jwtParser.parse(jwt);
-        if (parsed == null || parsed.subject() == null || parsed.subject().isBlank()) {
-            throw new IllegalStateException(CommonError.AUTH_SUBJECT_MISSING.getMessage());
-        }
-
-        try {
-            return Long.parseLong(parsed.subject());
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException(CommonError.AUTH_SUBJECT_INVALID.getMessage());
-        }
     }
 }
