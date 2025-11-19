@@ -7,6 +7,7 @@ import com.moau.moau.schedule.domain.Schedule;
 import com.moau.moau.schedule.dto.ScheduleCreateRequest;
 import com.moau.moau.schedule.dto.ScheduleDetailResponse;
 import com.moau.moau.schedule.dto.ScheduleResponse;
+import com.moau.moau.schedule.dto.ScheduleUpdateRequest;
 import com.moau.moau.schedule.repository.ScheduleRepository;
 import com.moau.moau.team.domain.Team;
 import com.moau.moau.team.domain.TeamMember;
@@ -46,7 +47,7 @@ public class ScheduleService {
         boolean isMember = teamMemberRepository.existsByTeam_IdAndUser_IdAndStatus(
                 teamId,
                 currentUserId,
-                TeamMemberStatus.ACTIVE // ⬅️ ACTIVE 상태임을 명시
+                TeamMemberStatus.ACTIVE
         );
 
         if (!isMember) {
@@ -93,8 +94,46 @@ public class ScheduleService {
         return ScheduleDetailResponse.from(schedule);
     }
 
+    // [추가] 단일 일정 수정 로직
+    @Transactional
+    public Long updateSchedule(Long scheduleId, ScheduleUpdateRequest request) { // ⬅️ DTO 수신
+
+        // 1. 일정 존재 확인 (404 Not Found)
+        Schedule schedule = scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new BusinessException(CommonError.SCHEDULE_NOT_FOUND));
+
+        // 2. 일정의 teamId를 가져와 멤버십 확인 (보안 체크 - 403 Forbidden)
+        Long teamId = schedule.getTeam().getId();
+        Long currentUserId = SecurityUtil.getCurrentUserId();
+
+        boolean isMember = teamMemberRepository.existsByTeam_IdAndUser_IdAndStatus(
+                teamId,
+                currentUserId,
+                TeamMemberStatus.ACTIVE
+        );
+
+        if (!isMember) {
+            // 멤버가 아니면 403 Forbidden 예외를 발생시킵니다.
+            throw new BusinessException(CommonError.ACCESS_DENIED);
+        }
+
+        // 3. 엔티티 내용 수정 (Dirty Checking)
+        // TODO: Schedule 엔티티에 update() 메서드가 필요합니다.
+        schedule.update(
+                request.getTitle(),
+                request.getDescription(),
+                request.getLocation(),
+                request.getStartsAt(),
+                request.getEndsAt(),
+                request.isAllDay()
+        );
+
+        // 4. (save 없이) ID 반환 - @Transactional에 의해 자동 반영됨
+        return schedule.getId();
+    }
+
     // [추가] 단일 일정 삭제 로직
-    @Transactional // ⬅️ Write 작업이므로 @Transactional 필수
+    @Transactional
     public void deleteSchedule(Long scheduleId) {
 
         // 1. 일정 존재 확인 (404 Not Found)

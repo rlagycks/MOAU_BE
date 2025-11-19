@@ -3,6 +3,7 @@ package com.moau.moau.schedule.controller;
 import com.moau.moau.schedule.dto.ScheduleCreateRequest;
 import com.moau.moau.schedule.dto.ScheduleDetailResponse;
 import com.moau.moau.schedule.dto.ScheduleResponse;
+import com.moau.moau.schedule.dto.ScheduleUpdateRequest;
 import com.moau.moau.schedule.service.ScheduleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -50,7 +51,17 @@ public class ScheduleController implements ScheduleControllerSwagger{
         return ResponseEntity.ok(response);
     }
 
-    // 5. [추가] 단일 일정 삭제 (Delete)
+    // 5. [추가] 단일 일정 수정 (Update)
+    @PutMapping("/schedules/{scheduleId}")
+    public ResponseEntity<Long> updateSchedule(
+            @PathVariable Long scheduleId,
+            @RequestBody ScheduleUpdateRequest request) {
+
+        Long updatedId = scheduleService.updateSchedule(scheduleId, request);
+        return ResponseEntity.ok(updatedId);
+    }
+
+    // 6. 단일 일정 삭제
     @DeleteMapping("/schedules/{scheduleId}")
     public ResponseEntity<Void> deleteSchedule(@PathVariable Long scheduleId) {
         scheduleService.deleteSchedule(scheduleId);

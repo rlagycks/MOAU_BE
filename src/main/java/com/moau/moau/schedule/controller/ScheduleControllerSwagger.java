@@ -3,6 +3,7 @@ package com.moau.moau.schedule.controller;
 import com.moau.moau.schedule.dto.ScheduleCreateRequest;
 import com.moau.moau.schedule.dto.ScheduleDetailResponse;
 import com.moau.moau.schedule.dto.ScheduleResponse;
+import com.moau.moau.schedule.dto.ScheduleUpdateRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -47,6 +48,14 @@ public interface ScheduleControllerSwagger {
     @Parameter(name = "scheduleId", description = "조회할 일정 ID", example = "1002")
     ResponseEntity<ScheduleDetailResponse> getScheduleDetail(
             @PathVariable Long scheduleId
+    );
+
+    @Operation(summary = "단일 일정 수정",
+            description = "특정 일정(scheduleId) 하나를 수정합니다.")
+    @Parameter(name = "scheduleId", description = "수정할 일정 ID", example = "1002")
+    ResponseEntity<Long> updateSchedule(
+            @PathVariable Long scheduleId,
+            @RequestBody ScheduleUpdateRequest request
     );
 
     @Operation(summary = "단일 일정 삭제",
