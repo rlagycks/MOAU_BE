@@ -5,6 +5,7 @@ import com.moau.moau.global.exception.error.CommonError;
 import com.moau.moau.jwt.ports.JwtParserPort;
 import com.moau.moau.team.dto.response.TeamMemberResponse;
 import com.moau.moau.team.service.TeamMemberService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,7 +15,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/teams/{teamId}/members")
-public class TeamMemberController implements TeamMemberControllerSwagger{
+public class TeamMemberController implements TeamMemberControllerSwagger {
 
     private final TeamMemberService teamMemberService;
     private final JwtParserPort jwtParser;
@@ -27,7 +28,7 @@ public class TeamMemberController implements TeamMemberControllerSwagger{
             @RequestHeader("Authorization") String authorization,
             @PathVariable Long teamId
     ) {
-
+        // 필요하면 나중에 userId 꺼내서 "팀 멤버만 조회 가능" 체크 추가 가능
         List<TeamMemberResponse> members = teamMemberService.getTeamsMembers(teamId);
         return ResponseEntity.ok(members);
     }
@@ -45,6 +46,24 @@ public class TeamMemberController implements TeamMemberControllerSwagger{
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * [ADMIN + OWNER 전용] 멤버 강퇴
+     * - userId: 강퇴할 대상 유저의 id
+     */
+    @DeleteMapping("/{userId}")
+    public ResponseEntity<Void> kickMember(
+            @RequestHeader("Authorization") String authorization,
+            @PathVariable Long teamId,
+            @PathVariable Long userId
+    ) {
+        Long currentUserId = extractUserId(authorization);
+        teamMemberService.kickMember(currentUserId, teamId, userId);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Authorization 헤더에서 JWT를 파싱해 userId(subject)를 추출
+     */
     private Long extractUserId(String authorization) {
         if (authorization == null || authorization.isBlank()) {
             throw new IllegalArgumentException(CommonError.AUTH_HEADER_MISSING.getMessage());

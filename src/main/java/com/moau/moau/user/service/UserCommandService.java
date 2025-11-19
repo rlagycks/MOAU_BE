@@ -67,4 +67,31 @@ public class UserCommandService {
         User newUser = User.createWithKakao(testKakaoId, email, testNickname);
         return users.save(newUser);
     }
+
+     //내 닉네임 수정
+
+    @Transactional
+    public User updateNickname(Long userId, String nickname) {
+        User user = users.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        if (nickname == null || nickname.isBlank()) {
+            throw new IllegalArgumentException("닉네임이 비어 있습니다.");
+        }
+
+        user.changeNickname(nickname);
+        return user;
+    }
+
+
+     //내 정보 삭제
+
+    @Transactional
+    public void deleteUser(Long userId) {
+        User user = users.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        users.delete(user);
+    }
+
 }

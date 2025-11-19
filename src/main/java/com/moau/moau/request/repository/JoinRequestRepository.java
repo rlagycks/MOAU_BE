@@ -2,11 +2,18 @@
 package com.moau.moau.request.repository;
 
 import com.moau.moau.request.domain.JoinRequest;
+import com.moau.moau.request.domain.JoinRequestStatus;
 import com.moau.moau.team.domain.Team;
 import com.moau.moau.user.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
+
 public interface JoinRequestRepository extends JpaRepository<JoinRequest, Long> {
 
-    boolean existsByTeamAndRequestUserAndStatus(Team team, User requestUser, String status);
+    boolean existsByTeamAndRequestUserAndStatus(Team team, User requestUser, JoinRequestStatus status);
+
+    List<JoinRequest> findAllByTeamIdAndStatus(Long teamId, JoinRequestStatus status);
+
 }
+
