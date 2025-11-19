@@ -7,6 +7,8 @@ import com.moau.moau.accounting.common.service.CategoryCommandService;
 import com.moau.moau.accounting.common.service.CategoryQueryService;
 import com.moau.moau.global.exception.ErrorResponse;
 import com.moau.moau.global.payload.ResponseDto;
+import com.moau.moau.global.security.CheckTeamRole;
+import com.moau.moau.team.domain.TeamMemberRole;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -37,6 +39,7 @@ public class CategoryController {
             @ApiResponse(responseCode = "409", description = "카테고리 이름 중복", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping
+    @CheckTeamRole(TeamMemberRole.ADMIN)
     public ResponseEntity<ResponseDto<CategoryResponseDto>> createCategory(
             @Parameter(description = "팀 ID", required = true) @PathVariable Long teamId,
             @Valid @RequestBody CategoryRequestDto requestDto
@@ -48,6 +51,7 @@ public class CategoryController {
 
     @Operation(summary = "카테고리 목록 조회", description = "(Auth: MEMBER)")
     @GetMapping
+    @CheckTeamRole(TeamMemberRole.MEMBER) // ⬅️ [수정] 멤버는 조회 가능 (영수증 등록 등)
     public ResponseEntity<ResponseDto<List<CategoryResponseDto>>> getCategories(
             @Parameter(description = "팀 ID", required = true) @PathVariable Long teamId,
             @Parameter(description = "타입 필터 (INCOME | EXPENSE)", example = "EXPENSE")
@@ -65,6 +69,7 @@ public class CategoryController {
             @ApiResponse(responseCode = "409", description = "카테고리 이름 중복", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PutMapping("/{categoryId}")
+    @CheckTeamRole(TeamMemberRole.ADMIN)
     public ResponseEntity<ResponseDto<CategoryResponseDto>> updateCategory(
             @Parameter(description = "팀 ID", required = true) @PathVariable Long teamId,
             @Parameter(description = "카테고리 ID", required = true) @PathVariable Long categoryId,

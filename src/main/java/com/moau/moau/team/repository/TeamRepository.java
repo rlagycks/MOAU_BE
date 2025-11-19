@@ -28,4 +28,6 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
     @Modifying(clearAutomatically = true)
     @Query("update Team t set t.deletedAt = :when where t.id = :id")
     int softDeleteById(@Param("id") Long id, @Param("when") Instant when);
+
+    Optional<Team> findByIdAndOwnerIdAndDeletedAtIsNull(Long id, Long ownerId);
 }
