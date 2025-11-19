@@ -68,8 +68,7 @@ public class ScheduleService {
                 .collect(Collectors.toList());
     }
 
-    // [추가] 일정 상세 조회 메서드 시그니처 (로직 구현 필요)
-    // ⬅️ 반환 타입을 ScheduleDetailResponse로 수정
+    // 일정 상세 조회 (Read Single)
     public ScheduleDetailResponse getScheduleDetail(Long scheduleId) {
         // 1. 일정 존재 확인 (404 Not Found)
         Schedule schedule = scheduleRepository.findById(scheduleId)
@@ -91,8 +90,35 @@ public class ScheduleService {
         }
 
         // 3. DTO로 변환 후 반환
-        // ⬅️ ScheduleDetailResponse.from(schedule) 호출로 수정
         return ScheduleDetailResponse.from(schedule);
+    }
+
+    // [추가] 단일 일정 삭제 로직
+    @Transactional // ⬅️ Write 작업이므로 @Transactional 필수
+    public void deleteSchedule(Long scheduleId) {
+
+        // 1. 일정 존재 확인 (404 Not Found)
+        Schedule schedule = scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new BusinessException(CommonError.SCHEDULE_NOT_FOUND));
+
+        // 2. 일정의 teamId를 가져와 멤버십 확인 (보안 체크 - 403 Forbidden)
+        Long teamId = schedule.getTeam().getId();
+        Long currentUserId = SecurityUtil.getCurrentUserId();
+
+        // 현재 유저가 해당 일정의 팀 멤버(ACTIVE)인지 확인합니다.
+        boolean isMember = teamMemberRepository.existsByTeam_IdAndUser_IdAndStatus(
+                teamId,
+                currentUserId,
+                TeamMemberStatus.ACTIVE
+        );
+
+        if (!isMember) {
+            // 팀 멤버가 아니면 403 Forbidden 예외를 발생시킵니다.
+            throw new BusinessException(CommonError.ACCESS_DENIED);
+        }
+
+        // 3. 삭제 실행
+        scheduleRepository.delete(schedule);
     }
 
     @Transactional

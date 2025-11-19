@@ -49,4 +49,8 @@ public interface ScheduleControllerSwagger {
             @PathVariable Long scheduleId
     );
 
+    @Operation(summary = "단일 일정 삭제",
+            description = "특정 일정(scheduleId) 하나를 삭제합니다.")
+    @Parameter(name = "scheduleId", description = "삭제할 일정 ID", example = "1002")
+    ResponseEntity<Void> deleteSchedule(@PathVariable Long scheduleId);
 }

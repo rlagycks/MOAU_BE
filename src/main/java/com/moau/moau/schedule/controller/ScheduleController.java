@@ -50,4 +50,11 @@ public class ScheduleController implements ScheduleControllerSwagger{
         return ResponseEntity.ok(response);
     }
 
+    // 5. [추가] 단일 일정 삭제 (Delete)
+    @DeleteMapping("/schedules/{scheduleId}")
+    public ResponseEntity<Void> deleteSchedule(@PathVariable Long scheduleId) {
+        scheduleService.deleteSchedule(scheduleId);
+        // HTTP 204 No Content 반환
+        return ResponseEntity.noContent().build();
+    }
 }
