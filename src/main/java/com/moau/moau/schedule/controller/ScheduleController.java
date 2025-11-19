@@ -21,7 +21,7 @@ public class ScheduleController implements ScheduleControllerSwagger{
 
     private final ScheduleService scheduleService;
 
-    // 1. 내 캘린더 조회 (권한 체크 불필요 - 자기 것만 조회함)
+    // 1. 내 캘린더 조회
     @GetMapping("/schedules/me")
     public ResponseEntity<List<ScheduleResponse>> getMySchedules(@RequestParam Integer year,
                                                                  @RequestParam Integer month) {
@@ -29,7 +29,7 @@ public class ScheduleController implements ScheduleControllerSwagger{
         return ResponseEntity.ok(schedules);
     }
 
-    // 2. 팀 캘린더 조회 -> MEMBER 이상 (일반 팀원도 조회 가능)
+    // 2. 팀 캘린더 조회
     @GetMapping("/teams/{teamId}/schedules")
     @CheckTeamRole(TeamMemberRole.MEMBER)
     public ResponseEntity<List<ScheduleResponse>> getTeamSchedules(@PathVariable Long teamId,
@@ -39,7 +39,7 @@ public class ScheduleController implements ScheduleControllerSwagger{
         return ResponseEntity.ok(schedules);
     }
 
-    // 3. 팀 일정 생성 -> ADMIN 이상 (관리자만 생성 가능)
+    // 3. 팀 일정 생성
     @PostMapping("/teams/{teamId}/schedules")
     @CheckTeamRole(TeamMemberRole.ADMIN)
     public ResponseEntity<Long> createSchedule(@PathVariable Long teamId,
@@ -48,14 +48,14 @@ public class ScheduleController implements ScheduleControllerSwagger{
         return ResponseEntity.status(HttpStatus.CREATED).body(scheduleId);
     }
 
-    // 4. 일정 상세 조회 (URL에 teamId 없음 -> 서비스에서 체크)
+    // 4. 일정 상세 조회
     @GetMapping("/schedules/{scheduleId}")
     public ResponseEntity<ScheduleDetailResponse> getScheduleDetail(@PathVariable Long scheduleId) {
         ScheduleDetailResponse response = scheduleService.getScheduleDetail(scheduleId);
         return ResponseEntity.ok(response);
     }
 
-    // 5. 단일 일정 수정 (URL에 teamId 없음 -> 서비스에서 체크)
+    // 5. 단일 일정 수정
     @PutMapping("/schedules/{scheduleId}")
     public ResponseEntity<Long> updateSchedule(
             @PathVariable Long scheduleId,
@@ -65,7 +65,7 @@ public class ScheduleController implements ScheduleControllerSwagger{
         return ResponseEntity.ok(updatedId);
     }
 
-    // 6. 단일 일정 삭제 (URL에 teamId 없음 -> 서비스에서 체크)
+    // 6. 단일 일정 삭제
     @DeleteMapping("/schedules/{scheduleId}")
     public ResponseEntity<Void> deleteSchedule(@PathVariable Long scheduleId) {
         scheduleService.deleteSchedule(scheduleId);

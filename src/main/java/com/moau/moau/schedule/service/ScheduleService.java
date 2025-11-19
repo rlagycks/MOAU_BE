@@ -42,8 +42,6 @@ public class ScheduleService {
         if (!teamRepository.existsById(teamId)) {
             throw new BusinessException(CommonError.TEAM_NOT_FOUND);
         }
-
-        // [안전장치 추가] 조회도 멤버여야 가능하므로 검증 추가 (선택사항이지만 권장)
         validateActiveMember(teamId);
 
         YearMonth yearMonth = YearMonth.of(year, month);
@@ -98,11 +96,9 @@ public class ScheduleService {
         scheduleRepository.delete(schedule);
     }
 
-    // 5. 팀 일정 생성 (🚨 보안 로직 복구됨)
+    // 5. 팀 일정 생성
     @Transactional
     public Long createSchedule(Long teamId, ScheduleCreateRequest request) {
-        // [✅ 수정됨] 서비스 계층에서도 관리자 권한을 명시적으로 검사합니다.
-        // 어노테이션이 실패하더라도 여기서 막힙니다.
         validateAdminOrOwner(teamId);
 
         Long currentUserId = SecurityUtil.getCurrentUserId();
@@ -143,7 +139,7 @@ public class ScheduleService {
                 .collect(Collectors.toList());
     }
 
-    // 🔒 [내부 메서드 1] 단순 멤버십 확인
+    // 단순 멤버십 확인
     private void validateActiveMember(Long teamId) {
         Long currentUserId = SecurityUtil.getCurrentUserId();
 
@@ -158,7 +154,7 @@ public class ScheduleService {
         }
     }
 
-    // 🔒 [내부 메서드 2] 관리자/오너 권한 확인
+    // 관리자/오너 권한 확인
     private void validateAdminOrOwner(Long teamId) {
         Long currentUserId = SecurityUtil.getCurrentUserId();
 
