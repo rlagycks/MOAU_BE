@@ -68,6 +68,13 @@ jobs:
               "APP_KAKAO_TOKEN_URI=${{ secrets.KAKAO_TOKEN_URI }}",
               "APP_KAKAO_USER_ME_URI=${{ secrets.KAKAO_USER_ME_URI }}",
               "APP_KAKAO_REDIRECT_URIS_0=${{ secrets.KAKAO_REDIRECT_URIS }}",
+          
+              "# --- Naver OCR ---",
+              "APP_NAVER_OCR_API_URL=${{ secrets.NAVER_OCR_API_URL }}",
+              "APP_NAVER_OCR_SECRET_KEY=${{ secrets.NAVER_OCR_SECRET_KEY }}",
+          
+              "# --- OpenAI ---",
+              "APP_OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}",
               "ENV",
 
               "# --- compose 파일 (매번 덮어쓰기) ---",

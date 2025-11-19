@@ -11,10 +11,10 @@ import lombok.Setter;
 import java.time.Instant;
 
 @Getter
-@Setter // 이미 있으면 또 쓸 필요 없음
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name = "TEAM_MEMBERS") // [✅ 수정] 대문자 복수형
+@Table(name = "TEAM_MEMBERS")
 public class TeamMember {
 
     @EmbeddedId
@@ -22,16 +22,16 @@ public class TeamMember {
 
     @MapsId("teamId")
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "TEAM_ID") // [ 수정] 대문자
+    @JoinColumn(name = "TEAM_ID")
     private Team team;
 
     @MapsId("userId")
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "USER_ID") // [ 수정] 대문자
+    @JoinColumn(name = "USER_ID")
     private User user;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "ROLE", nullable = false, length = 10)
+    @Column(nullable = false)
     private TeamMemberRole role;
 
     @Enumerated(EnumType.STRING)
