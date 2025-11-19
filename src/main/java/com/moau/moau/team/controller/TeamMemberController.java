@@ -1,11 +1,10 @@
-// src/main/java/com/moau/moau/team/controller/TeamMemberController.java
 package com.moau.moau.team.controller;
 
-import com.moau.moau.global.exception.error.CommonError;
-import com.moau.moau.jwt.ports.JwtParserPort;
+import com.moau.moau.global.security.SecurityUtil;
+import com.moau.moau.global.security.CheckTeamRole;
+import com.moau.moau.team.domain.TeamMemberRole;
 import com.moau.moau.team.dto.response.TeamMemberResponse;
 import com.moau.moau.team.service.TeamMemberService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,70 +17,32 @@ import java.util.List;
 public class TeamMemberController implements TeamMemberControllerSwagger {
 
     private final TeamMemberService teamMemberService;
-    private final JwtParserPort jwtParser;
 
-    /**
-     * 팀 멤버 목록 조회
-     */
     @GetMapping
+    @CheckTeamRole(TeamMemberRole.MEMBER) // [적용]
     public ResponseEntity<List<TeamMemberResponse>> members(
-            @RequestHeader("Authorization") String authorization,
             @PathVariable Long teamId
     ) {
-        // 필요하면 나중에 userId 꺼내서 "팀 멤버만 조회 가능" 체크 추가 가능
         List<TeamMemberResponse> members = teamMemberService.getTeamsMembers(teamId);
         return ResponseEntity.ok(members);
     }
 
-    /**
-     * 팀 나가기 (현재 로그인한 유저 기준)
-     */
     @PostMapping("/leave")
+    @CheckTeamRole(TeamMemberRole.MEMBER) // [적용]
     public ResponseEntity<Void> leaveTeam(
-            @RequestHeader("Authorization") String authorization,
             @PathVariable Long teamId
     ) {
-        Long userId = extractUserId(authorization);
-        teamMemberService.leaveTeam(userId, teamId);
+        teamMemberService.leaveTeam(teamId);
         return ResponseEntity.noContent().build();
     }
 
-    /**
-     * [ADMIN + OWNER 전용] 멤버 강퇴
-     * - userId: 강퇴할 대상 유저의 id
-     */
     @DeleteMapping("/{userId}")
+    @CheckTeamRole(TeamMemberRole.ADMIN) // [적용] 관리자 이상 강퇴 가능
     public ResponseEntity<Void> kickMember(
-            @RequestHeader("Authorization") String authorization,
             @PathVariable Long teamId,
             @PathVariable Long userId
     ) {
-        Long currentUserId = extractUserId(authorization);
-        teamMemberService.kickMember(currentUserId, teamId, userId);
+        teamMemberService.kickMember(teamId, userId);
         return ResponseEntity.noContent().build();
-    }
-
-    /**
-     * Authorization 헤더에서 JWT를 파싱해 userId(subject)를 추출
-     */
-    private Long extractUserId(String authorization) {
-        if (authorization == null || authorization.isBlank()) {
-            throw new IllegalArgumentException(CommonError.AUTH_HEADER_MISSING.getMessage());
-        }
-        if (!authorization.startsWith("Bearer ")) {
-            throw new IllegalArgumentException(CommonError.AUTH_HEADER_INVALID.getMessage());
-        }
-
-        String jwt = authorization.substring(7);
-        JwtParserPort.Parsed parsed = jwtParser.parse(jwt);
-        if (parsed == null || parsed.subject() == null || parsed.subject().isBlank()) {
-            throw new IllegalStateException(CommonError.AUTH_SUBJECT_MISSING.getMessage());
-        }
-
-        try {
-            return Long.parseLong(parsed.subject());
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException(CommonError.AUTH_SUBJECT_INVALID.getMessage());
-        }
     }
 }
