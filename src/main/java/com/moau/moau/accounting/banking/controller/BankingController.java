@@ -8,6 +8,8 @@ import com.moau.moau.accounting.banking.dto.response.BankTransactionDto;
 import com.moau.moau.accounting.banking.service.BankingCommandService;
 import com.moau.moau.accounting.banking.service.BankingQueryService;
 import com.moau.moau.global.payload.ResponseDto;
+import com.moau.moau.global.security.CheckTeamRole;
+import com.moau.moau.team.domain.TeamMemberRole;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -18,6 +20,8 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.moau.moau.global.security.CheckTeamRole;
+import com.moau.moau.team.domain.TeamMemberRole;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -25,7 +29,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
-public class BankingController implements BankingControllerSwagger{
+public class BankingController implements BankingControllerSwagger {
 
     private final BankingCommandService bankingCommandService;
     private final BankingQueryService bankingQueryService;
@@ -35,6 +39,7 @@ public class BankingController implements BankingControllerSwagger{
         return ResponseEntity.ok(ResponseDto.data(bankingQueryService.getBankList()));
     }
 
+    @CheckTeamRole(TeamMemberRole.ADMIN)
     @PostMapping("/teams/{teamId}/accounting/banking/account")
     public ResponseEntity<ResponseDto<BankAccountDto>> registerAccount(
             @PathVariable Long teamId,
@@ -44,6 +49,7 @@ public class BankingController implements BankingControllerSwagger{
         return ResponseEntity.status(HttpStatus.CREATED).body(ResponseDto.data(responseDto));
     }
 
+    @CheckTeamRole(TeamMemberRole.MEMBER)
     @GetMapping("/teams/{teamId}/accounting/banking/balance")
     public ResponseEntity<ResponseDto<BalanceDto>> getAccountBalance(
             @PathVariable Long teamId
@@ -51,6 +57,7 @@ public class BankingController implements BankingControllerSwagger{
         return ResponseEntity.ok(ResponseDto.data(bankingQueryService.getAccountBalance(teamId)));
     }
 
+    @CheckTeamRole(TeamMemberRole.MEMBER)
     @GetMapping("/teams/{teamId}/accounting/banking/transactions")
     public ResponseEntity<ResponseDto<Page<BankTransactionDto>>> getAccountTransactions(
             @PathVariable Long teamId,
