@@ -9,6 +9,7 @@ import com.moau.moau.schedule.dto.ScheduleResponse;
 import com.moau.moau.schedule.repository.ScheduleRepository;
 import com.moau.moau.team.domain.Team;
 import com.moau.moau.team.domain.TeamMember;
+import com.moau.moau.team.domain.TeamMemberStatus;
 import com.moau.moau.team.repository.TeamMemberRepository;
 import com.moau.moau.team.repository.TeamRepository;
 import com.moau.moau.user.domain.User;
@@ -34,15 +35,19 @@ public class ScheduleService {
     private final TeamMemberRepository teamMemberRepository;
 
     public List<ScheduleResponse> getTeamSchedules(Long teamId, int year, int month) {
-        // 1. [추가] 현재 유저 ID를 가져옵니다.
+        // 1. 현재 유저 ID를 가져옵니다.
         Long currentUserId = SecurityUtil.getCurrentUserId();
 
         // 2. 팀이 존재하는지 확인
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new BusinessException(CommonError.TEAM_NOT_FOUND));
 
-        // 3. [핵심 로직 추가] 현재 유저가 해당 팀의 멤버인지 확인
-        boolean isMember = teamMemberRepository.existsByTeam_IdAndUser_Id(teamId, currentUserId);
+        // 3. [핵심 수정] 현재 유저가 **ACTIVE** 멤버인지 확인
+        boolean isMember = teamMemberRepository.existsByTeam_IdAndUser_IdAndStatus(
+                teamId,
+                currentUserId,
+                TeamMemberStatus.ACTIVE // ⬅️ ACTIVE 상태임을 명시
+        );
 
         if (!isMember) {
             // 멤버가 아니면 403 Forbidden 예외를 발생시킵니다.
@@ -67,13 +72,17 @@ public class ScheduleService {
     public Long createSchedule(Long teamId, ScheduleCreateRequest request) {
         Long currentUserId = SecurityUtil.getCurrentUserId();
 
-        // [추가된 보안 로직 시작] 현재 유저가 해당 팀의 멤버인지 확인
-        boolean isMember = teamMemberRepository.existsByTeam_IdAndUser_Id(teamId, currentUserId);
+        // [핵심 수정] 현재 유저가 **ACTIVE** 멤버인지 확인
+        boolean isMember = teamMemberRepository.existsByTeam_IdAndUser_IdAndStatus(
+                teamId,
+                currentUserId,
+                TeamMemberStatus.ACTIVE //
+        );
+
         if (!isMember) {
             // 멤버가 아니면 403 Forbidden 예외를 발생시킵니다.
             throw new BusinessException(CommonError.ACCESS_DENIED);
         }
-        // [추가된 보안 로직 끝]
 
         User creator = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다. id=" + currentUserId));
