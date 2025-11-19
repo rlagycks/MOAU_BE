@@ -7,8 +7,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor; // ⬅️ [추가] Jackson이 기본 생성자로 객체를 만듭니다.
-import lombok.Setter;       // ⬅️ [추가] Jackson이 필드에 값을 주입할 수 있게 합니다.
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.Instant;
 
@@ -21,7 +21,7 @@ public class ScheduleUpdateRequest {
 
     @NotBlank(message = "일정 제목은 필수 입력 항목입니다.")
     @Schema(description = "일정 제목", example = "팀 프로젝트 중간 발표")
-    private String title; // ⬅️ 'final' 키워드가 없어야 Setter가 의미를 가집니다.
+    private String title;
 
     @Schema(description = "일정 상세 설명", example = "각자 맡은 파트 구현 현황 및 다음 스프린트 계획 논의")
     private String description;

@@ -15,13 +15,13 @@ public class ScheduleDetailResponse {
     private Long teamId;
 
     private String title;
-    private String description; // ⬅️ 상세 정보
-    private String location;    // ⬅️ 상세 정보
+    private String description;
+    private String location;
 
     private Instant startsAt;
     private Instant endsAt;
 
-    private String recurringId; // ⬅️ 반복 일정 ID
+    private String recurringId;
 
     // 일정 생성자 정보 (별도 조인 필요)
     private Long creatorId;

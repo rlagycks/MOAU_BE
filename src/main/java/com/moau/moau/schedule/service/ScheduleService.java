@@ -96,7 +96,7 @@ public class ScheduleService {
 
     // [추가] 단일 일정 수정 로직
     @Transactional
-    public Long updateSchedule(Long scheduleId, ScheduleUpdateRequest request) { // ⬅️ DTO 수신
+    public Long updateSchedule(Long scheduleId, ScheduleUpdateRequest request) {
 
         // 1. 일정 존재 확인 (404 Not Found)
         Schedule schedule = scheduleRepository.findById(scheduleId)
