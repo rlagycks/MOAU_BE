@@ -30,8 +30,9 @@ public class TeamMember {
     @JoinColumn(name = "USER_ID") // [ 수정] 대문자
     private User user;
 
-    @Column(nullable = false)
-    private String role; // ENUM
+    @Enumerated(EnumType.STRING)
+    @Column(name = "ROLE", nullable = false, length = 10)
+    private TeamMemberRole role;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)

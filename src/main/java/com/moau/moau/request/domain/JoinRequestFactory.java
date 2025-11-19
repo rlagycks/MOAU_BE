@@ -14,7 +14,7 @@ public class JoinRequestFactory {
 
         setField(req, "team", team);
         setField(req, "requestUser", requestUser);
-        setField(req, "status", "PENDING");  // 신청 시 기본값
+        setField(req, "status", JoinRequestStatus.PENDING);  // 신청 시 기본값
         setField(req, "decidedBy", null);
         setField(req, "decidedAt", null);
 
@@ -22,19 +22,19 @@ public class JoinRequestFactory {
     }
 
     public static void approve(JoinRequest req, User decider, Instant now) {
-        setField(req, "status", "APPROVED");
+        setField(req, "status", JoinRequestStatus.APPROVED);
         setField(req, "decidedBy", decider);
         setField(req, "decidedAt", now);
     }
 
     public static void reject(JoinRequest req, User decider, Instant now) {
-        setField(req, "status", "REJECTED");
+        setField(req, "status", JoinRequestStatus.REJECTED);
         setField(req, "decidedBy", decider);
         setField(req, "decidedAt", now);
     }
 
     public static void cancel(JoinRequest req, User requester, Instant now) {
-        setField(req, "status", "CANCELED");
+        setField(req, "status", JoinRequestStatus.CANCELED);
         setField(req, "decidedBy", requester); // 취소한 사람을 남길지 말지는 정책에 따라
         setField(req, "decidedAt", now);
     }

@@ -1,14 +1,17 @@
-// src/main/java/com/moau/moau/team/service/TeamJoinApproveService.java
+// src/main/java/com/moau/moau/request/service/TeamJoinApproveService.java
 package com.moau.moau.request.service;
 
 import com.moau.moau.request.domain.JoinRequest;
 import com.moau.moau.request.domain.JoinRequestFactory;
+import com.moau.moau.request.domain.JoinRequestStatus;
+import com.moau.moau.request.repository.JoinRequestRepository;
 import com.moau.moau.team.domain.Team;
 import com.moau.moau.team.domain.TeamMember;
 import com.moau.moau.team.domain.TeamMemberFactory;
-import com.moau.moau.request.repository.JoinRequestRepository;
+import com.moau.moau.team.domain.TeamMemberRole;
 import com.moau.moau.team.domain.TeamMemberStatus;
 import com.moau.moau.team.repository.TeamMemberRepository;
+import com.moau.moau.team.service.TeamAuthorizationService;
 import com.moau.moau.user.domain.User;
 import com.moau.moau.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,45 +24,40 @@ import java.time.Instant;
 @RequiredArgsConstructor
 public class TeamJoinApproveService {
 
-    // TeamRepository 는 더 이상 안 써서 지워도 됨
     private final UserRepository users;
     private final JoinRequestRepository joinRequests;
     private final TeamMemberRepository teamMembers;
+    private final TeamAuthorizationService teamAuth;
 
+    /**
+     * [ADMIN + OWNER] 가입 승인 + TeamMember 생성
+     */
     @Transactional
     public void approve(Long requestId, Long approverUserId) {
-        // 가입 신청 조회
         JoinRequest req = joinRequests.findById(requestId)
                 .orElseThrow(() -> new IllegalArgumentException("가입 신청을 찾을 수 없습니다."));
 
-        // 가입 신청에 연결된 그룹/유저 정보
         Team team = req.getTeam();
         User targetUser = req.getRequestUser();
+        Long teamId = team.getId();
 
-        // 승인자 조회
-        User approver = users.findById(approverUserId)
-                .orElseThrow(() -> new IllegalArgumentException("승인 사용자를 찾을 수 없습니다."));
+        // ADMIN 또는 OWNER 권한 체크
+        TeamMember approverMember = teamAuth.requireAdminOrOwner(approverUserId, teamId);
+        User approver = approverMember.getUser();
 
-        // 지금은 그룹장만 승인 가능
-        if (!team.getOwner().getId().equals(approverUserId)) {
-            throw new IllegalStateException("그룹장만 가입 신청을 승인할 수 있습니다.");
-        }
-
-        // PENDING만 승인 가능
-        if (!"PENDING".equals(req.getStatus())) {
+        if (!JoinRequestStatus.PENDING.equals(req.getStatus())) {
             throw new IllegalStateException("이미 처리된 가입 신청입니다.");
         }
 
-        // 이미 멤버인 경우 방어
         if (teamMembers.existsByTeamAndUser(team, targetUser)) {
-            throw new IllegalStateException("이미 이 그룹의 멤버입니다.");
+            throw new IllegalStateException("이미 이 팀의 멤버입니다.");
         }
 
         // TeamMember 생성 (ACTIVE, 기본 MEMBER)
         TeamMember member = TeamMemberFactory.create(
                 team,
                 targetUser,
-                "MEMBER",
+                TeamMemberRole.MEMBER,
                 TeamMemberStatus.ACTIVE,
                 approverUserId
         );
@@ -67,5 +65,27 @@ public class TeamJoinApproveService {
 
         // JoinRequest 상태 APPROVED 로 변경
         JoinRequestFactory.approve(req, approver, Instant.now());
+    }
+
+    /**
+     * [ADMIN + OWNER] 가입 거절
+     */
+    @Transactional
+    public void reject(Long requestId, Long approverUserId) {
+        JoinRequest req = joinRequests.findById(requestId)
+                .orElseThrow(() -> new IllegalArgumentException("가입 신청을 찾을 수 없습니다."));
+
+        Team team = req.getTeam();
+        Long teamId = team.getId();
+
+        // ADMIN 또는 OWNER 권한 체크
+        TeamMember approverMember = teamAuth.requireAdminOrOwner(approverUserId, teamId);
+        User approver = approverMember.getUser();
+
+        if (JoinRequestStatus.PENDING.equals(req.getStatus())) {
+            throw new IllegalStateException("이미 처리된 가입 신청입니다.");
+        }
+
+        JoinRequestFactory.reject(req, approver, Instant.now());
     }
 }

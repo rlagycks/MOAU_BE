@@ -17,7 +17,6 @@ public class JwtParserAdapter implements JwtParserPort {
 
     public JwtParserAdapter(JwtProps props) {
         this.key = SafeKeys.from(props.getSecret());
-        System.out.println("[JWT] parser key byte length = " + key.getEncoded().length);
     }
 
     @Override
