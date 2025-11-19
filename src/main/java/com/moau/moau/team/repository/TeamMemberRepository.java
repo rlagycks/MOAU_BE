@@ -4,6 +4,7 @@ package com.moau.moau.team.repository;
 import com.moau.moau.team.domain.Team;
 import com.moau.moau.team.domain.TeamMember;
 import com.moau.moau.team.domain.TeamMemberId;
+import com.moau.moau.team.domain.TeamMemberStatus;
 import com.moau.moau.user.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -21,5 +22,5 @@ public interface TeamMemberRepository extends JpaRepository<TeamMember, TeamMemb
     Optional<TeamMember> findByTeamIdAndUserId(Long teamId, Long userId);
 
 
-    boolean existsByTeam_IdAndUser_Id(Long teamId, Long userId);
+    boolean existsByTeam_IdAndUser_IdAndStatus(Long teamId, Long userId, TeamMemberStatus status);
 }

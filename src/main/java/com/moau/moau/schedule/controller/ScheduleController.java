@@ -1,7 +1,9 @@
 package com.moau.moau.schedule.controller;
 
 import com.moau.moau.schedule.dto.ScheduleCreateRequest;
+import com.moau.moau.schedule.dto.ScheduleDetailResponse;
 import com.moau.moau.schedule.dto.ScheduleResponse;
+import com.moau.moau.schedule.dto.ScheduleUpdateRequest;
 import com.moau.moau.schedule.service.ScheduleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,7 +19,7 @@ public class ScheduleController implements ScheduleControllerSwagger{
 
     private final ScheduleService scheduleService;
 
-    // 1. 내 캘린더 조회 (통합 뷰) [✅ 수정됨]
+    // 1. 내 캘린더 조회 (통합 뷰)
     @GetMapping("/schedules/me")
     public ResponseEntity<List<ScheduleResponse>> getMySchedules(@RequestParam Integer year,
                                                                  @RequestParam Integer month) {
@@ -42,31 +44,28 @@ public class ScheduleController implements ScheduleControllerSwagger{
         return ResponseEntity.status(HttpStatus.CREATED).body(scheduleId);
     }
 
-    // 4. 단일 일정 수정
+    // 4. 일정 상세 조회 (Read Single)
+    @GetMapping("/schedules/{scheduleId}")
+    public ResponseEntity<ScheduleDetailResponse> getScheduleDetail(@PathVariable Long scheduleId) {
+        ScheduleDetailResponse response = scheduleService.getScheduleDetail(scheduleId);
+        return ResponseEntity.ok(response);
+    }
+
+    // 5. [추가] 단일 일정 수정 (Update)
     @PutMapping("/schedules/{scheduleId}")
-    public ResponseEntity<?> updateSchedule(@PathVariable Long scheduleId /*, @RequestBody ... */) {
-        // TODO: Request Body DTO를 만들고, service.updateSchedule() 호출 로직 구현
-        return ResponseEntity.ok(scheduleId + "번 일정 수정 성공");
+    public ResponseEntity<Long> updateSchedule(
+            @PathVariable Long scheduleId,
+            @RequestBody ScheduleUpdateRequest request) {
+
+        Long updatedId = scheduleService.updateSchedule(scheduleId, request);
+        return ResponseEntity.ok(updatedId);
     }
 
-    // 5. 단일 일정 삭제
+    // 6. 단일 일정 삭제
     @DeleteMapping("/schedules/{scheduleId}")
-    public ResponseEntity<?> deleteSchedule(@PathVariable Long scheduleId) {
-        // TODO: scheduleService.deleteSchedule(scheduleId) 호출 로직 구현
-        return ResponseEntity.ok(scheduleId + "번 일정 삭제 성공");
-    }
-
-    // 6. 반복 일정 전체 수정
-    @PutMapping("/schedules/recurring/{recurringId}")
-    public ResponseEntity<?> updateRecurringSchedules(@PathVariable String recurringId /*, @RequestBody ... */) {
-        // TODO: Request Body DTO를 만들고, service.updateRecurringSchedules() 호출 로직 구현
-        return ResponseEntity.ok(recurringId + " 반복 일정 전체 수정 성공");
-    }
-
-    // 7. 반복 일정 전체 삭제
-    @DeleteMapping("/schedules/recurring/{recurringId}")
-    public ResponseEntity<?> deleteRecurringSchedules(@PathVariable String recurringId) {
-        // TODO: scheduleService.deleteRecurringSchedules(recurringId) 호출 로직 구현
-        return ResponseEntity.ok(recurringId + " 반복 일정 전체 삭제 성공");
+    public ResponseEntity<Void> deleteSchedule(@PathVariable Long scheduleId) {
+        scheduleService.deleteSchedule(scheduleId);
+        // HTTP 204 No Content 반환
+        return ResponseEntity.noContent().build();
     }
 }

@@ -5,10 +5,13 @@ import com.moau.moau.global.exception.error.CommonError;
 import com.moau.moau.global.util.SecurityUtil;
 import com.moau.moau.schedule.domain.Schedule;
 import com.moau.moau.schedule.dto.ScheduleCreateRequest;
+import com.moau.moau.schedule.dto.ScheduleDetailResponse;
 import com.moau.moau.schedule.dto.ScheduleResponse;
+import com.moau.moau.schedule.dto.ScheduleUpdateRequest;
 import com.moau.moau.schedule.repository.ScheduleRepository;
 import com.moau.moau.team.domain.Team;
 import com.moau.moau.team.domain.TeamMember;
+import com.moau.moau.team.domain.TeamMemberStatus;
 import com.moau.moau.team.repository.TeamMemberRepository;
 import com.moau.moau.team.repository.TeamRepository;
 import com.moau.moau.user.domain.User;
@@ -34,7 +37,6 @@ public class ScheduleService {
     private final TeamMemberRepository teamMemberRepository;
 
     public List<ScheduleResponse> getTeamSchedules(Long teamId, int year, int month) {
-        // 1. [추가] 현재 유저 ID를 가져옵니다.
         Long currentUserId = SecurityUtil.getCurrentUserId();
 
         // 2. 팀이 존재하는지 확인
@@ -42,7 +44,11 @@ public class ScheduleService {
                 .orElseThrow(() -> new BusinessException(CommonError.TEAM_NOT_FOUND));
 
         // 3. [핵심 로직 추가] 현재 유저가 해당 팀의 멤버인지 확인
-        boolean isMember = teamMemberRepository.existsByTeam_IdAndUser_Id(teamId, currentUserId);
+        boolean isMember = teamMemberRepository.existsByTeam_IdAndUser_IdAndStatus(
+                teamId,
+                currentUserId,
+                TeamMemberStatus.ACTIVE
+        );
 
         if (!isMember) {
             // 멤버가 아니면 403 Forbidden 예외를 발생시킵니다.
@@ -63,17 +69,112 @@ public class ScheduleService {
                 .collect(Collectors.toList());
     }
 
+    // 일정 상세 조회 (Read Single)
+    public ScheduleDetailResponse getScheduleDetail(Long scheduleId) {
+        // 1. 일정 존재 확인 (404 Not Found)
+        Schedule schedule = scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new BusinessException(CommonError.SCHEDULE_NOT_FOUND));
+
+        // 2. 일정의 teamId를 가져와 멤버십 확인 (보안 체크 - 403 Forbidden)
+        Long teamId = schedule.getTeam().getId();
+        Long currentUserId = SecurityUtil.getCurrentUserId();
+
+        boolean isMember = teamMemberRepository.existsByTeam_IdAndUser_IdAndStatus(
+                teamId,
+                currentUserId,
+                TeamMemberStatus.ACTIVE
+        );
+
+        if (!isMember) {
+            // 멤버가 아니면 403 Forbidden 예외를 발생시킵니다.
+            throw new BusinessException(CommonError.ACCESS_DENIED);
+        }
+
+        // 3. DTO로 변환 후 반환
+        return ScheduleDetailResponse.from(schedule);
+    }
+
+    // [추가] 단일 일정 수정 로직
+    @Transactional
+    public Long updateSchedule(Long scheduleId, ScheduleUpdateRequest request) {
+
+        // 1. 일정 존재 확인 (404 Not Found)
+        Schedule schedule = scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new BusinessException(CommonError.SCHEDULE_NOT_FOUND));
+
+        // 2. 일정의 teamId를 가져와 멤버십 확인 (보안 체크 - 403 Forbidden)
+        Long teamId = schedule.getTeam().getId();
+        Long currentUserId = SecurityUtil.getCurrentUserId();
+
+        boolean isMember = teamMemberRepository.existsByTeam_IdAndUser_IdAndStatus(
+                teamId,
+                currentUserId,
+                TeamMemberStatus.ACTIVE
+        );
+
+        if (!isMember) {
+            // 멤버가 아니면 403 Forbidden 예외를 발생시킵니다.
+            throw new BusinessException(CommonError.ACCESS_DENIED);
+        }
+
+        // 3. 엔티티 내용 수정 (Dirty Checking)
+        // TODO: Schedule 엔티티에 update() 메서드가 필요합니다.
+        schedule.update(
+                request.getTitle(),
+                request.getDescription(),
+                request.getLocation(),
+                request.getStartsAt(),
+                request.getEndsAt(),
+                request.isAllDay()
+        );
+
+        // 4. (save 없이) ID 반환 - @Transactional에 의해 자동 반영됨
+        return schedule.getId();
+    }
+
+    // [추가] 단일 일정 삭제 로직
+    @Transactional
+    public void deleteSchedule(Long scheduleId) {
+
+        // 1. 일정 존재 확인 (404 Not Found)
+        Schedule schedule = scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new BusinessException(CommonError.SCHEDULE_NOT_FOUND));
+
+        // 2. 일정의 teamId를 가져와 멤버십 확인 (보안 체크 - 403 Forbidden)
+        Long teamId = schedule.getTeam().getId();
+        Long currentUserId = SecurityUtil.getCurrentUserId();
+
+        // 현재 유저가 해당 일정의 팀 멤버(ACTIVE)인지 확인합니다.
+        boolean isMember = teamMemberRepository.existsByTeam_IdAndUser_IdAndStatus(
+                teamId,
+                currentUserId,
+                TeamMemberStatus.ACTIVE
+        );
+
+        if (!isMember) {
+            // 팀 멤버가 아니면 403 Forbidden 예외를 발생시킵니다.
+            throw new BusinessException(CommonError.ACCESS_DENIED);
+        }
+
+        // 3. 삭제 실행
+        scheduleRepository.delete(schedule);
+    }
+
     @Transactional
     public Long createSchedule(Long teamId, ScheduleCreateRequest request) {
         Long currentUserId = SecurityUtil.getCurrentUserId();
 
         // [추가된 보안 로직 시작] 현재 유저가 해당 팀의 멤버인지 확인
-        boolean isMember = teamMemberRepository.existsByTeam_IdAndUser_Id(teamId, currentUserId);
+        boolean isMember = teamMemberRepository.existsByTeam_IdAndUser_IdAndStatus(
+                teamId,
+                currentUserId,
+                TeamMemberStatus.ACTIVE
+        );
+
         if (!isMember) {
             // 멤버가 아니면 403 Forbidden 예외를 발생시킵니다.
             throw new BusinessException(CommonError.ACCESS_DENIED);
         }
-        // [추가된 보안 로직 끝]
 
         User creator = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다. id=" + currentUserId));
