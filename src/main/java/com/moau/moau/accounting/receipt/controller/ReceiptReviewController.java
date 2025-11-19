@@ -7,6 +7,8 @@ import com.moau.moau.accounting.receipt.dto.response.ReceiptReviewDto;
 import com.moau.moau.accounting.receipt.service.ReceiptReviewCommandService;
 import com.moau.moau.accounting.receipt.service.ReceiptReviewQueryService;
 import com.moau.moau.global.payload.ResponseDto;
+import com.moau.moau.global.security.CheckTeamRole;
+import com.moau.moau.team.domain.TeamMemberRole;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -31,12 +33,12 @@ public class ReceiptReviewController implements ReceiptReviewApi {
             @RequestParam(required = false, defaultValue = "PENDING_APPROVAL") ReviewStatus status,
             @PageableDefault(sort = "requestedAt", direction = Sort.Direction.DESC, size = 10) Pageable pageable
     ) {
-        // (이 메서드는 QueryService를 사용하므로 원래도 정상이었습니다)
         Page<ReceiptReviewDto> responseDto = receiptReviewQueryService.getPendingReviews(teamId, status, pageable);
         return ResponseEntity.ok(ResponseDto.data(responseDto));
     }
 
     @Override
+    @CheckTeamRole(TeamMemberRole.ADMIN)
     @PostMapping("/{reviewId}/approve")
     public ResponseEntity<ResponseDto<ReceiptReviewDto>> approveReceipt(
             @PathVariable Long teamId,
@@ -48,6 +50,7 @@ public class ReceiptReviewController implements ReceiptReviewApi {
     }
 
     @Override
+    @CheckTeamRole(TeamMemberRole.ADMIN)
     @PostMapping("/{reviewId}/reject")
     public ResponseEntity<ResponseDto<ReceiptReviewDto>> rejectReceipt(
             @PathVariable Long teamId,

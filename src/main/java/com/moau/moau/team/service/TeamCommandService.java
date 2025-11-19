@@ -1,5 +1,7 @@
 package com.moau.moau.team.service;
 
+import com.moau.moau.global.exception.BusinessException;
+import com.moau.moau.global.exception.error.CommonError;
 import com.moau.moau.team.domain.Team;
 import com.moau.moau.team.domain.TeamFactory;
 import com.moau.moau.team.repository.TeamRepository;
@@ -21,18 +23,17 @@ public class TeamCommandService {
 
     private final TeamRepository teams;
     private final UserRepository users;
-    private final TeamMemberService teamMembers; //  추가
+    private final TeamMemberService teamMembers;
     private final SecureRandom random = new SecureRandom();
 
     @Transactional
     public TeamDetailResponse createTeam(Long ownerUserId, TeamCreateRequest req) {
         User owner = users.findById(ownerUserId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(CommonError.USER_NOT_FOUND));
 
         String inviteCode = generateUniqueInviteCode();
 
         Team team = TeamFactory.create(owner, req.name(), req.description(), inviteCode);
-
         Team saved = teams.save(team);
 
         teamMembers.addOwnerMember(saved.getId(), owner.getId());
@@ -42,12 +43,8 @@ public class TeamCommandService {
 
     @Transactional
     public TeamDetailResponse updateTeam(Long currentUserId, Long teamId, TeamUpdateRequest req) {
-        Team team = teams.findById(teamId)
-                .orElseThrow(() -> new IllegalArgumentException("팀을 찾을 수 없습니다."));
-
-        if (!team.getOwner().getId().equals(currentUserId)) {
-            throw new IllegalStateException("팀 수정 권한이 없습니다.");
-        }
+        Team team = teams.findByIdAndOwnerIdAndDeletedAtIsNull(teamId, currentUserId)
+                .orElseThrow(() -> new BusinessException(CommonError.TEAM_NOT_FOUND));
 
         team.setName(req.name());
         team.setDescription(req.description());
@@ -55,17 +52,11 @@ public class TeamCommandService {
         return TeamDetailResponse.from(team);
     }
 
-    // TeamCommandService
     @Transactional
     public void deleteTeam(Long currentUserId, Long teamId) {
-        Team team = teams.findById(teamId)
-                .orElseThrow(() -> new IllegalArgumentException("팀을 찾을 수 없습니다."));
+        Team team = teams.findByIdAndOwnerIdAndDeletedAtIsNull(teamId, currentUserId)
+                .orElseThrow(() -> new BusinessException(CommonError.TEAM_NOT_FOUND));
 
-        if (!team.getOwner().getId().equals(currentUserId)) {
-            throw new IllegalStateException("팀 삭제 권한이 없습니다.");
-        }
-
-        // 소프트 딜리트: 실제 delete() 안 하고 마킹만
         teams.softDeleteById(teamId, Instant.now());
     }
 
@@ -80,11 +71,9 @@ public class TeamCommandService {
     private String generateInviteCode() {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         StringBuilder sb = new StringBuilder(8);
-
         for (int i = 0; i < 8; i++) {
             sb.append(chars.charAt(random.nextInt(chars.length())));
         }
-
         return sb.toString();
     }
 }
