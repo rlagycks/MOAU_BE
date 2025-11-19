@@ -1,6 +1,7 @@
 package com.moau.moau.schedule.controller;
 
 import com.moau.moau.schedule.dto.ScheduleCreateRequest;
+import com.moau.moau.schedule.dto.ScheduleDetailResponse;
 import com.moau.moau.schedule.dto.ScheduleResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -10,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Tag(name = "스케줄 API", description = "캘린저 조회 및 일정(반복 일정 포함) 관리 API")
+@Tag(name = "스케줄 API", description = "캘린더 조회 및 일정(반복 일정 포함) 관리 API")
 public interface ScheduleControllerSwagger {
 
     @Operation(summary = "내 캘린더 조회 (통합)",
@@ -41,27 +42,11 @@ public interface ScheduleControllerSwagger {
             @RequestBody ScheduleCreateRequest request
     );
 
-    @Operation(summary = "단일 일정 수정",
-            description = "특정 일정(scheduleId) 하나를 수정합니다.")
-    @Parameter(name = "scheduleId", description = "수정할 일정 ID", example = "101")
-    ResponseEntity<?> updateSchedule(
+    @Operation(summary = "일정 상세 조회",
+            description = "특정 일정(scheduleId)의 모든 상세 정보를 조회합니다.")
+    @Parameter(name = "scheduleId", description = "조회할 일정 ID", example = "1002")
+    ResponseEntity<ScheduleDetailResponse> getScheduleDetail(
             @PathVariable Long scheduleId
     );
 
-    @Operation(summary = "단일 일정 삭제",
-            description = "특정 일정(scheduleId) 하나를 삭제합니다.")
-    @Parameter(name = "scheduleId", description = "삭제할 일정 ID", example = "101")
-    ResponseEntity<?> deleteSchedule(@PathVariable Long scheduleId);
-
-    @Operation(summary = "반복 일정 전체 수정",
-            description = "반복 ID(recurringId)가 동일한 모든 일정을 '전체' 수정합니다.")
-    @Parameter(name = "recurringId", description = "수정할 반복 일정의 고유 ID", example = "recurr-abc-123")
-    ResponseEntity<?> updateRecurringSchedules(
-            @PathVariable String recurringId
-    );
-
-    @Operation(summary = "반복 일정 전체 삭제",
-            description = "반복 ID(recurringId)가 동일한 모든 일정을 '전체' 삭제합니다.")
-    @Parameter(name = "recurringId", description = "삭제할 반복 일정의 고유 ID", example = "recurr-abc-123")
-    ResponseEntity<?> deleteRecurringSchedules(@PathVariable String recurringId);
 }

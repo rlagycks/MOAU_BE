@@ -8,8 +8,9 @@ public enum CommonError implements BaseError {
     GROUP_NOT_FOUND(HttpStatus.NOT_FOUND, "GROUP_NOT_FOUND", "그룹을 찾을 수 없습니다."),
     ACCESS_DENIED(HttpStatus.FORBIDDEN, "ACCESS_DENIED", "권한이 없습니다."),
 
-    // [ 이 부분을 추가해주세요]
     TEAM_NOT_FOUND(HttpStatus.NOT_FOUND, "TEAM_NOT_FOUND", "팀을 찾을 수 없습니다."),
+
+    SCHEDULE_NOT_FOUND(HttpStatus.NOT_FOUND, "SCHEDULE_NOT_FOUND", "일정을 찾을 수 없습니다."),
 
     LOGOUT_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "LOGOUT_UNAUTHORIZED", "로그아웃 요청이 인증되지 않았습니다."),
 

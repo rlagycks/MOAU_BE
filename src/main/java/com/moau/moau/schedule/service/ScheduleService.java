@@ -5,6 +5,7 @@ import com.moau.moau.global.exception.error.CommonError;
 import com.moau.moau.global.util.SecurityUtil;
 import com.moau.moau.schedule.domain.Schedule;
 import com.moau.moau.schedule.dto.ScheduleCreateRequest;
+import com.moau.moau.schedule.dto.ScheduleDetailResponse;
 import com.moau.moau.schedule.dto.ScheduleResponse;
 import com.moau.moau.schedule.repository.ScheduleRepository;
 import com.moau.moau.team.domain.Team;
@@ -35,14 +36,13 @@ public class ScheduleService {
     private final TeamMemberRepository teamMemberRepository;
 
     public List<ScheduleResponse> getTeamSchedules(Long teamId, int year, int month) {
-        // 1. 현재 유저 ID를 가져옵니다.
         Long currentUserId = SecurityUtil.getCurrentUserId();
 
         // 2. 팀이 존재하는지 확인
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new BusinessException(CommonError.TEAM_NOT_FOUND));
 
-        // 3. [핵심 수정] 현재 유저가 **ACTIVE** 멤버인지 확인
+        // 3. [핵심 로직 추가] 현재 유저가 해당 팀의 멤버인지 확인
         boolean isMember = teamMemberRepository.existsByTeam_IdAndUser_IdAndStatus(
                 teamId,
                 currentUserId,
@@ -68,15 +68,42 @@ public class ScheduleService {
                 .collect(Collectors.toList());
     }
 
+    // [추가] 일정 상세 조회 메서드 시그니처 (로직 구현 필요)
+    // ⬅️ 반환 타입을 ScheduleDetailResponse로 수정
+    public ScheduleDetailResponse getScheduleDetail(Long scheduleId) {
+        // 1. 일정 존재 확인 (404 Not Found)
+        Schedule schedule = scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new BusinessException(CommonError.SCHEDULE_NOT_FOUND));
+
+        // 2. 일정의 teamId를 가져와 멤버십 확인 (보안 체크 - 403 Forbidden)
+        Long teamId = schedule.getTeam().getId();
+        Long currentUserId = SecurityUtil.getCurrentUserId();
+
+        boolean isMember = teamMemberRepository.existsByTeam_IdAndUser_IdAndStatus(
+                teamId,
+                currentUserId,
+                TeamMemberStatus.ACTIVE
+        );
+
+        if (!isMember) {
+            // 멤버가 아니면 403 Forbidden 예외를 발생시킵니다.
+            throw new BusinessException(CommonError.ACCESS_DENIED);
+        }
+
+        // 3. DTO로 변환 후 반환
+        // ⬅️ ScheduleDetailResponse.from(schedule) 호출로 수정
+        return ScheduleDetailResponse.from(schedule);
+    }
+
     @Transactional
     public Long createSchedule(Long teamId, ScheduleCreateRequest request) {
         Long currentUserId = SecurityUtil.getCurrentUserId();
 
-        // [핵심 수정] 현재 유저가 **ACTIVE** 멤버인지 확인
+        // [추가된 보안 로직 시작] 현재 유저가 해당 팀의 멤버인지 확인
         boolean isMember = teamMemberRepository.existsByTeam_IdAndUser_IdAndStatus(
                 teamId,
                 currentUserId,
-                TeamMemberStatus.ACTIVE //
+                TeamMemberStatus.ACTIVE
         );
 
         if (!isMember) {
