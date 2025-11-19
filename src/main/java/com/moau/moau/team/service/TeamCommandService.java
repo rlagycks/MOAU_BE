@@ -1,5 +1,6 @@
 package com.moau.moau.team.service;
 
+import com.moau.moau.global.exception.error.CommonError;
 import com.moau.moau.team.domain.Team;
 import com.moau.moau.team.domain.TeamFactory;
 import com.moau.moau.team.repository.TeamRepository;
@@ -21,13 +22,17 @@ public class TeamCommandService {
 
     private final TeamRepository teams;
     private final UserRepository users;
-    private final TeamMemberService teamMembers; //  추가
+    private final TeamMemberService teamMembers;
     private final SecureRandom random = new SecureRandom();
 
+    /** 팀 생성 */
     @Transactional
     public TeamDetailResponse createTeam(Long ownerUserId, TeamCreateRequest req) {
+
         User owner = users.findById(ownerUserId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() ->
+                        new IllegalArgumentException(CommonError.USER_NOT_FOUND.getMessage())
+                );
 
         String inviteCode = generateUniqueInviteCode();
 
@@ -35,18 +40,23 @@ public class TeamCommandService {
 
         Team saved = teams.save(team);
 
+        // 팀장 멤버 추가
         teamMembers.addOwnerMember(saved.getId(), owner.getId());
 
         return TeamDetailResponse.from(saved);
     }
 
+    /** 팀 수정 */
     @Transactional
     public TeamDetailResponse updateTeam(Long currentUserId, Long teamId, TeamUpdateRequest req) {
+
         Team team = teams.findById(teamId)
-                .orElseThrow(() -> new IllegalArgumentException("팀을 찾을 수 없습니다."));
+                .orElseThrow(() ->
+                        new IllegalArgumentException(CommonError.TEAM_NOT_FOUND.getMessage())
+                );
 
         if (!team.getOwner().getId().equals(currentUserId)) {
-            throw new IllegalStateException("팀 수정 권한이 없습니다.");
+            throw new IllegalStateException(CommonError.TEAM_UPDATE_FORBIDDEN.getMessage());
         }
 
         team.setName(req.name());
@@ -55,20 +65,23 @@ public class TeamCommandService {
         return TeamDetailResponse.from(team);
     }
 
-    // TeamCommandService
+    /** 팀 삭제 (Soft Delete) */
     @Transactional
     public void deleteTeam(Long currentUserId, Long teamId) {
+
         Team team = teams.findById(teamId)
-                .orElseThrow(() -> new IllegalArgumentException("팀을 찾을 수 없습니다."));
+                .orElseThrow(() ->
+                        new IllegalArgumentException(CommonError.TEAM_NOT_FOUND.getMessage())
+                );
 
         if (!team.getOwner().getId().equals(currentUserId)) {
-            throw new IllegalStateException("팀 삭제 권한이 없습니다.");
+            throw new IllegalStateException(CommonError.TEAM_DELETE_FORBIDDEN.getMessage());
         }
 
-        // 소프트 딜리트: 실제 delete() 안 하고 마킹만
         teams.softDeleteById(teamId, Instant.now());
     }
 
+    /** 초대 코드 생성 */
     private String generateUniqueInviteCode() {
         String code;
         do {

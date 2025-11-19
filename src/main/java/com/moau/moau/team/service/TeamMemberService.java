@@ -1,5 +1,6 @@
 package com.moau.moau.team.service;
 
+import com.moau.moau.global.exception.error.CommonError;
 import com.moau.moau.global.security.SecurityUtil;
 import com.moau.moau.team.domain.*;
 import com.moau.moau.team.dto.response.TeamMemberResponse;
@@ -21,11 +22,14 @@ public class TeamMemberService {
     private final TeamMemberRepository teamMembers;
     private final UserRepository users;
 
-
+    /** 팀 멤버 목록 조회 */
     @Transactional(readOnly = true)
     public List<TeamMemberResponse> getTeamsMembers(Long teamId) {
+
         Team team = teams.findById(teamId)
-                .orElseThrow(() -> new IllegalStateException("존재하지 않는 팀입니다."));
+                .orElseThrow(() ->
+                        new IllegalStateException(CommonError.TEAM_NOT_FOUND.getMessage())
+                );
 
         return teamMembers.findAllByTeam(team)
                 .stream()
@@ -34,13 +38,19 @@ public class TeamMemberService {
                 .toList();
     }
 
+    /** 팀 생성 시 OWNER 멤버 추가 */
     @Transactional
     public void addOwnerMember(Long teamId, Long ownerUserId) {
+
         Team team = teams.findById(teamId)
-                .orElseThrow(() -> new IllegalStateException("존재하지 않는 팀입니다."));
+                .orElseThrow(() ->
+                        new IllegalStateException(CommonError.TEAM_NOT_FOUND.getMessage())
+                );
 
         User owner = users.findById(ownerUserId)
-                .orElseThrow(() -> new IllegalStateException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() ->
+                        new IllegalStateException(CommonError.USER_NOT_FOUND.getMessage())
+                );
 
         TeamMemberId id = new TeamMemberId(teamId, ownerUserId);
 
@@ -59,119 +69,149 @@ public class TeamMemberService {
         teamMembers.save(member);
     }
 
+    /** 팀 나가기 */
     @Transactional
     public void leaveTeam(Long teamId) {
+
         Long currentUserId = SecurityUtil.getCurrentUserId();
 
         Team team = teams.findByIdAndDeletedAtIsNull(teamId)
-                .orElseThrow(() -> new IllegalStateException("존재하지 않는 팀입니다."));
+                .orElseThrow(() ->
+                        new IllegalStateException(CommonError.TEAM_NOT_FOUND.getMessage())
+                );
 
         if (team.getOwner().getId().equals(currentUserId)) {
-            throw new IllegalStateException("대표는 팀을 나갈 수 없습니다. 팀을 삭제하거나 팀장을 다른 멤버에게 양도해야 합니다.");
+            throw new IllegalStateException(CommonError.TEAM_OWNER_CANNOT_LEAVE.getMessage());
         }
 
         TeamMemberId id = new TeamMemberId(teamId, currentUserId);
+
         TeamMember member = teamMembers.findById(id)
-                .orElseThrow(() -> new IllegalStateException("해당 팀의 멤버가 아닙니다."));
+                .orElseThrow(() ->
+                        new IllegalStateException(CommonError.TEAM_MEMBER_NOT_FOUND.getMessage())
+                );
 
         if (member.getStatus() == TeamMemberStatus.LEFT) {
-            throw new IllegalStateException("이미 팀을 나간 멤버입니다.");
+            throw new IllegalStateException(CommonError.TEAM_MEMBER_ALREADY_LEFT.getMessage());
         }
 
         member.setStatus(TeamMemberStatus.LEFT);
         member.setUpdatedBy(currentUserId);
     }
 
+    /** 멤버 역할 변경 */
     @Transactional
     public void changeMemberRole(Long teamId, Long targetUserId, TeamMemberRole newRole) {
+
         Long currentUserId = SecurityUtil.getCurrentUserId();
 
         Team team = teams.findByIdAndDeletedAtIsNull(teamId)
-                .orElseThrow(() -> new IllegalStateException("존재하지 않는 팀입니다."));
+                .orElseThrow(() ->
+                        new IllegalStateException(CommonError.TEAM_NOT_FOUND.getMessage())
+                );
 
         if (!TeamMemberRole.ADMIN.equals(newRole) && !TeamMemberRole.MEMBER.equals(newRole)) {
-            throw new IllegalStateException("유효하지 않은 역할입니다. ADMIN 또는 MEMBER만 설정할 수 있습니다.");
+            throw new IllegalStateException(CommonError.TEAM_ROLE_INVALID.getMessage());
         }
 
         TeamMemberId targetId = new TeamMemberId(teamId, targetUserId);
+
         TeamMember target = teamMembers.findById(targetId)
-                .orElseThrow(() -> new IllegalStateException("해당 팀의 멤버가 아닙니다."));
+                .orElseThrow(() ->
+                        new IllegalStateException(CommonError.TEAM_MEMBER_NOT_FOUND.getMessage())
+                );
 
         if (target.getStatus() != TeamMemberStatus.ACTIVE) {
-            throw new IllegalStateException("비활성화된 멤버의 역할은 변경할 수 없습니다.");
+            throw new IllegalStateException(CommonError.TEAM_MEMBER_NOT_ACTIVE.getMessage());
         }
 
         if (TeamMemberRole.OWNER.equals(target.getRole())) {
-            throw new IllegalStateException("오너 역할은 이 기능으로 변경할 수 없습니다.");
+            throw new IllegalStateException(CommonError.TEAM_OWNER_ROLE_CANNOT_BE_CHANGED.getMessage());
         }
 
         target.setRole(newRole);
         target.setUpdatedBy(currentUserId);
     }
 
+    /** 팀 강퇴 */
     @Transactional
     public void kickMember(Long teamId, Long targetUserId) {
+
         Long currentUserId = SecurityUtil.getCurrentUserId();
 
         Team team = teams.findByIdAndDeletedAtIsNull(teamId)
-                .orElseThrow(() -> new IllegalStateException("존재하지 않는 팀입니다."));
+                .orElseThrow(() ->
+                        new IllegalStateException(CommonError.TEAM_NOT_FOUND.getMessage())
+                );
 
         TeamMemberId targetId = new TeamMemberId(teamId, targetUserId);
+
         TeamMember target = teamMembers.findById(targetId)
-                .orElseThrow(() -> new IllegalStateException("해당 팀의 멤버가 아닙니다."));
+                .orElseThrow(() ->
+                        new IllegalStateException(CommonError.TEAM_MEMBER_NOT_FOUND.getMessage())
+                );
 
         if (target.getStatus() == TeamMemberStatus.LEFT) {
-            throw new IllegalStateException("이미 팀을 나간 멤버입니다.");
+            throw new IllegalStateException(CommonError.TEAM_MEMBER_ALREADY_LEFT.getMessage());
         }
 
         if (TeamMemberRole.OWNER.equals(target.getRole())) {
-            throw new IllegalStateException("팀 소유자는 강퇴할 수 없습니다.");
+            throw new IllegalStateException(CommonError.TEAM_OWNER_CANNOT_BE_KICKED.getMessage());
         }
 
         target.setStatus(TeamMemberStatus.LEFT);
         target.setUpdatedBy(currentUserId);
     }
 
+    /** 팀장 양도 */
     @Transactional
     public void transferOwner(Long teamId, Long newOwnerUserId) {
+
         Long currentUserId = SecurityUtil.getCurrentUserId();
 
         Team team = teams.findByIdAndDeletedAtIsNull(teamId)
-                .orElseThrow(() -> new IllegalStateException("존재하지 않는 팀입니다."));
+                .orElseThrow(() ->
+                        new IllegalStateException(CommonError.TEAM_NOT_FOUND.getMessage())
+                );
 
         User currentOwner = team.getOwner();
 
         if (currentUserId.equals(newOwnerUserId)) {
-            throw new IllegalStateException("자기 자신에게는 오너를 양도할 수 없습니다.");
+            throw new IllegalStateException(CommonError.TEAM_OWNER_TRANSFER_SELF.getMessage());
         }
 
         User newOwnerUser = users.findById(newOwnerUserId)
-                .orElseThrow(() -> new IllegalStateException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() ->
+                        new IllegalStateException(CommonError.USER_NOT_FOUND.getMessage())
+                );
 
         TeamMemberId newOwnerMemberId = new TeamMemberId(teamId, newOwnerUserId);
+
         TeamMember newOwnerMember = teamMembers.findById(newOwnerMemberId)
-                .orElseThrow(() -> new IllegalStateException("오너로 양도할 대상이 팀 멤버가 아닙니다."));
+                .orElseThrow(() ->
+                        new IllegalStateException(CommonError.TEAM_OWNER_TRANSFER_TARGET_NOT_MEMBER.getMessage())
+                );
 
         if (newOwnerMember.getStatus() != TeamMemberStatus.ACTIVE) {
-            throw new IllegalStateException("비활성화된 멤버에게는 오너를 양도할 수 없습니다.");
+            throw new IllegalStateException(CommonError.TEAM_OWNER_TRANSFER_TARGET_NOT_ACTIVE.getMessage());
         }
 
         if (TeamMemberRole.OWNER.equals(newOwnerMember.getRole())) {
-            throw new IllegalStateException("이미 오너 권한을 가진 멤버입니다.");
+            throw new IllegalStateException(CommonError.TEAM_OWNER_ALREADY.getMessage());
         }
 
         TeamMemberId currentOwnerMemberId = new TeamMemberId(teamId, currentUserId);
+
         TeamMember currentOwnerMember = teamMembers.findById(currentOwnerMemberId)
-                .orElseGet(() -> {
-                    TeamMember created = TeamMemberFactory.create(
-                            team,
-                            currentOwner,
-                            TeamMemberRole.MEMBER,
-                            TeamMemberStatus.ACTIVE,
-                            currentUserId
-                    );
-                    return teamMembers.save(created);
-                });
+                .orElseGet(() -> teamMembers.save(
+                        TeamMemberFactory.create(
+                                team,
+                                currentOwner,
+                                TeamMemberRole.MEMBER,
+                                TeamMemberStatus.ACTIVE,
+                                currentUserId
+                        )
+                ));
 
         currentOwnerMember.setRole(TeamMemberRole.MEMBER);
         currentOwnerMember.setUpdatedBy(currentUserId);

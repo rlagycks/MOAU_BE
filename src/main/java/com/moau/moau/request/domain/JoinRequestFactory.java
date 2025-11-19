@@ -1,6 +1,7 @@
-// src/main/java/com/moau/moau/team/domain/JoinRequestFactory.java
+// src/main/java/com/moau/moau/request/domain/JoinRequestFactory.java
 package com.moau.moau.request.domain;
 
+import com.moau.moau.global.exception.error.CommonError;
 import com.moau.moau.team.domain.Team;
 import com.moau.moau.user.domain.User;
 
@@ -14,7 +15,7 @@ public class JoinRequestFactory {
 
         setField(req, "team", team);
         setField(req, "requestUser", requestUser);
-        setField(req, "status", JoinRequestStatus.PENDING);  // 신청 시 기본값
+        setField(req, "status", JoinRequestStatus.PENDING);
         setField(req, "decidedBy", null);
         setField(req, "decidedAt", null);
 
@@ -35,7 +36,7 @@ public class JoinRequestFactory {
 
     public static void cancel(JoinRequest req, User requester, Instant now) {
         setField(req, "status", JoinRequestStatus.CANCELED);
-        setField(req, "decidedBy", requester); // 취소한 사람을 남길지 말지는 정책에 따라
+        setField(req, "decidedBy", requester);
         setField(req, "decidedAt", now);
     }
 
@@ -44,10 +45,10 @@ public class JoinRequestFactory {
             Field field = target.getClass().getDeclaredField(fieldName);
             field.setAccessible(true);
             field.set(target, value);
+
         } catch (NoSuchFieldException | IllegalAccessException e) {
-            throw new IllegalStateException(
-                    "JoinRequest 필드를 설정하는 중 오류가 발생했습니다: " + fieldName, e
-            );
+            // ⭐ 네 프로젝트 규칙: new IllegalStateException + CommonError 메시지
+            throw new IllegalStateException(CommonError.JOIN_REQUEST_FIELD_ERROR.getMessage());
         }
     }
 }

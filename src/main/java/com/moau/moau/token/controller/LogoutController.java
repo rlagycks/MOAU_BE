@@ -1,9 +1,11 @@
 // src/main/java/com/moau/moau/token/presentation/LogoutController.java
 package com.moau.moau.token.controller;
 
+import com.moau.moau.auth.controller.AuthControllerSwagger;
 import com.moau.moau.global.exception.error.CommonError;
 import com.moau.moau.token.service.TokenRefreshService;
 import com.moau.moau.token.dto.request.LogoutRequest;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -13,10 +15,13 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@Tag(name = "🛡️ Auth")
+
 public class LogoutController {
 
     private final TokenRefreshService tokenRefreshService;
 
+    @AuthControllerSwagger.Logout
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@Valid @RequestBody LogoutRequest req, Authentication auth) {
         if (auth == null || auth.getName() == null) {
