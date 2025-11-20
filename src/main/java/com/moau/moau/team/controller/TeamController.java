@@ -50,7 +50,7 @@ public class TeamController implements TeamControllerSwagger {
     }
 
     @PutMapping("/{teamId}")
-    @CheckTeamRole(TeamMemberRole.OWNER) // [적용] 오너만 수정 가능
+    @CheckTeamRole(TeamMemberRole.ADMIN) // [적용] 오너만 수정 가능
     public ResponseEntity<TeamDetailResponse> updateTeam(
             @PathVariable Long teamId,
             @RequestBody @Valid TeamUpdateRequest req
