@@ -21,9 +21,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
-import java.time.YearMonth;
-import java.time.ZoneId;
+import java.time.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -48,7 +46,7 @@ public class ScheduleService {
         Instant startOfMonth = yearMonth.atDay(1).atStartOfDay(ZoneId.of("Asia/Seoul")).toInstant();
         Instant endOfMonth = yearMonth.atEndOfMonth().atTime(23, 59, 59).atZone(ZoneId.of("Asia/Seoul")).toInstant();
 
-        List<Schedule> schedules = scheduleRepository.findByTeam_IdAndStartsAtBetween(teamId, startOfMonth, endOfMonth);
+        List<Schedule> schedules = scheduleRepository.findOverlappingSchedules(teamId, startOfMonth, endOfMonth);
 
         return schedules.stream()
                 .map(ScheduleResponse::from)
@@ -72,6 +70,8 @@ public class ScheduleService {
                 .orElseThrow(() -> new BusinessException(CommonError.SCHEDULE_NOT_FOUND));
 
         validateAdminOrOwner(schedule.getTeam().getId());
+
+        normalizeScheduleTime(request);
 
         schedule.update(
                 request.getTitle(),
@@ -100,6 +100,8 @@ public class ScheduleService {
     @Transactional
     public Long createSchedule(Long teamId, ScheduleCreateRequest request) {
         validateAdminOrOwner(teamId);
+
+        normalizeScheduleTime(request);
 
         Long currentUserId = SecurityUtil.getCurrentUserId();
 
@@ -132,41 +134,70 @@ public class ScheduleService {
         Instant startOfMonth = yearMonth.atDay(1).atStartOfDay(ZoneId.of("Asia/Seoul")).toInstant();
         Instant endOfMonth = yearMonth.atEndOfMonth().atTime(23, 59, 59).atZone(ZoneId.of("Asia/Seoul")).toInstant();
 
-        List<Schedule> schedules = scheduleRepository.findByTeam_IdInAndStartsAtBetween(myTeamIds, startOfMonth, endOfMonth);
+        List<Schedule> schedules = scheduleRepository.findOverlappingSchedulesByTeamIds(myTeamIds, startOfMonth, endOfMonth);
 
         return schedules.stream()
                 .map(ScheduleResponse::from)
                 .collect(Collectors.toList());
     }
 
-    // 단순 멤버십 확인
+    // [내부 메서드 1] 단순 멤버십 확인
     private void validateActiveMember(Long teamId) {
         Long currentUserId = SecurityUtil.getCurrentUserId();
-
         boolean isMember = teamMemberRepository.existsByTeam_IdAndUser_IdAndStatus(
-                teamId,
-                currentUserId,
-                TeamMemberStatus.ACTIVE
+                teamId, currentUserId, TeamMemberStatus.ACTIVE
         );
-
         if (!isMember) {
             throw new BusinessException(CommonError.ACCESS_DENIED);
         }
     }
 
-    // 관리자/오너 권한 확인
+    // [내부 메서드 2] 관리자/오너 권한 확인
     private void validateAdminOrOwner(Long teamId) {
         Long currentUserId = SecurityUtil.getCurrentUserId();
-
         TeamMember member = teamMemberRepository.findByTeamIdAndUserId(teamId, currentUserId)
                 .orElseThrow(() -> new BusinessException(CommonError.ACCESS_DENIED));
 
         if (member.getStatus() != TeamMemberStatus.ACTIVE) {
             throw new BusinessException(CommonError.ACCESS_DENIED);
         }
-
         if (!member.getRole().isAtLeast(TeamMemberRole.ADMIN)) {
             throw new BusinessException(CommonError.ACCESS_DENIED);
+        }
+    }
+
+    // [내부 메서드 3] 시간 정규화 로직 (생성용)
+    // 기간이 다르거나 isAllDay가 true면 시간을 00:00:00 ~ 23:59:59로 강제 조정
+    private void normalizeScheduleTime(ScheduleCreateRequest request) {
+        ZoneId KST = ZoneId.of("Asia/Seoul");
+        LocalDate startDate = request.getStartsAt().atZone(KST).toLocalDate();
+        LocalDate endDate = request.getEndsAt().atZone(KST).toLocalDate();
+
+        // 1. 날짜가 다르면 무조건 기간 일정(종일)으로 취급
+        if (!startDate.equals(endDate)) {
+            request.setAllDay(true);
+        }
+
+        // 2. 종일 일정(기간 포함)이라면 시간을 하루 전체로 확장
+        if (request.isAllDay()) {
+            request.setStartsAt(startDate.atStartOfDay(KST).toInstant());
+            request.setEndsAt(endDate.atTime(LocalTime.MAX).atZone(KST).toInstant());
+        }
+    }
+
+    // [내부 메서드 4] 시간 정규화 로직 (수정용 - 오버로딩)
+    private void normalizeScheduleTime(ScheduleUpdateRequest request) {
+        ZoneId KST = ZoneId.of("Asia/Seoul");
+        LocalDate startDate = request.getStartsAt().atZone(KST).toLocalDate();
+        LocalDate endDate = request.getEndsAt().atZone(KST).toLocalDate();
+
+        if (!startDate.equals(endDate)) {
+            request.setAllDay(true);
+        }
+
+        if (request.isAllDay()) {
+            request.setStartsAt(startDate.atStartOfDay(KST).toInstant());
+            request.setEndsAt(endDate.atTime(LocalTime.MAX).atZone(KST).toInstant());
         }
     }
 }
