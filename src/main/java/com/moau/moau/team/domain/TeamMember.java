@@ -31,7 +31,7 @@ public class TeamMember {
     private User user;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "varchar(255)")
     private TeamMemberRole role;
 
     @Enumerated(EnumType.STRING)
