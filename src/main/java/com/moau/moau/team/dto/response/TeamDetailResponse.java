@@ -1,5 +1,6 @@
 package com.moau.moau.team.dto.response;
 
+import com.moau.moau.team.domain.DuesPeriod; // Enum import
 import com.moau.moau.team.domain.Team;
 
 import java.time.Instant;
@@ -10,7 +11,10 @@ public record TeamDetailResponse(
         String name,
         String description,
         String inviteCode,
-        Instant createdAt
+        Instant createdAt,
+
+        DuesPeriod duesPeriod,
+        Long duesAmount
 ) {
     public static TeamDetailResponse from(Team t) {
         return new TeamDetailResponse(
@@ -19,7 +23,10 @@ public record TeamDetailResponse(
                 t.getName(),
                 t.getDescription(),
                 t.getInviteCode(),
-                t.getCreatedAt()
+                t.getCreatedAt(),
+
+                t.getDuesPeriod(),
+                t.getDuesAmount()
         );
     }
 }

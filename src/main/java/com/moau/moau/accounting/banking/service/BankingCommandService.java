@@ -78,33 +78,57 @@ public class BankingCommandService {
     public void recordExpense(Long teamId, Long bankAccountId, Long amountCents, Long categoryId,
                               String description, LocalDate transactionDate, Long reviewId) {
 
-        // 1. 계좌, 카테고리, 팀 유효성 검증
-        BankAccount account = bankAccountRepository.findById(bankAccountId)
+        BankAccount account = bankAccountRepository.findByIdAndTeamId(bankAccountId, teamId)
                 .orElseThrow(() -> new BusinessException(BankingError.ACCOUNT_NOT_FOUND));
 
-        if (!account.getTeamId().equals(teamId)) {
-            throw new BusinessException(BankingError.ACCOUNT_NOT_FOUND);
-        }
-
-        Category category = categoryRepository.findByIdAndTeamId(categoryId, teamId)
+        categoryRepository.findByIdAndTeamId(categoryId, teamId)
                 .orElseThrow(() -> new BusinessException(CategoryError.NOT_FOUND));
 
-        // 2. BANK_TRANSACTIONS 에 지출(음수) 내역 INSERT
         BankTransaction expense = BankTransaction.builder()
                 .bankAccount(account)
                 .txnDate(transactionDate)
-                .amountCents(amountCents * -1) // 지출이므로 음수로 변환
+                .amountCents(amountCents * -1)
                 .description(description)
                 .build();
         bankTransactionRepository.save(expense);
 
-        // 3. BANK_BALANCES 의 최신 잔액 UPDATE (차감)
+        // 4. 잔액 차감
+        updateBalance(account, amountCents * -1);
+    }
+
+    @Transactional
+    public void recordIncome(Long teamId, Long bankAccountId, Long amountCents, Long categoryId,
+                             String description, LocalDate transactionDate) {
+
+        // 1. 계좌 소유권 검증
+        BankAccount account = bankAccountRepository.findByIdAndTeamId(bankAccountId, teamId)
+                .orElseThrow(() -> new BusinessException(BankingError.ACCOUNT_NOT_FOUND));
+
+        // 2. 카테고리 검증
+        categoryRepository.findByIdAndTeamId(categoryId, teamId)
+                .orElseThrow(() -> new BusinessException(CategoryError.NOT_FOUND));
+
+        // 3. 수입 내역 기록 (양수 저장)
+        BankTransaction income = BankTransaction.builder()
+                .bankAccount(account)
+                .txnDate(transactionDate)
+                .amountCents(amountCents) // 양수
+                .description(description)
+                .build();
+        bankTransactionRepository.save(income);
+
+        // 4. 잔액 증가
+        updateBalance(account, amountCents);
+    }
+
+    // (공통) 잔액 업데이트 로직 분리
+    private void updateBalance(BankAccount account, Long amountDelta) {
         BankBalance latestBalance = bankBalanceRepository.findTopByBankAccountOrderByAsOfDesc(account)
                 .orElseThrow(() -> new BusinessException(BankingError.ACCOUNT_NOT_FOUND, "계좌의 잔액 정보가 없습니다."));
 
         BankBalance updatedBalance = BankBalance.builder()
                 .bankAccount(account)
-                .balanceCents(latestBalance.getBalanceCents() - amountCents) // 잔액 차감
+                .balanceCents(latestBalance.getBalanceCents() + amountDelta) // (기존 잔액 + 변동액)
                 .currency("KRW")
                 .asOf(Instant.now())
                 .build();

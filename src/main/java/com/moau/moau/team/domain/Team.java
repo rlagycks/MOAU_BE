@@ -12,7 +12,7 @@ import com.moau.moau.user.domain.User;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "TEAMS") // [ 수정] "TEAMS" (대문자 복수형)
+@Table(name = "TEAMS")
 public class Team extends BaseSoftDelete {
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -27,4 +27,18 @@ public class Team extends BaseSoftDelete {
 
     @Column(name = "invite_code", length = 8, unique = true)
     private String inviteCode;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "dues_period", nullable = false)
+    @Builder.Default
+    private DuesPeriod duesPeriod = DuesPeriod.NONE;
+
+    @Column(name = "dues_amount", nullable = false)
+    @Builder.Default
+    private Long duesAmount = 0L;
+
+    public void updateDuesSetting(DuesPeriod period, Long amount) {
+        this.duesPeriod = period;
+        this.duesAmount = amount;
+    }
 }

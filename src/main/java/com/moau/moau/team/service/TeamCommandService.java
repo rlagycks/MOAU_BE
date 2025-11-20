@@ -49,6 +49,8 @@ public class TeamCommandService {
         team.setName(req.name());
         team.setDescription(req.description());
 
+        team.updateDuesSetting(req.duesPeriod(), req.duesAmount());
+
         return TeamDetailResponse.from(team);
     }
 

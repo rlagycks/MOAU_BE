@@ -44,7 +44,6 @@ public class TeamMemberFactory {
             field.setAccessible(true);
             field.set(target, value);
         } catch (NoSuchFieldException | IllegalAccessException e) {
-            // 통일된 방식: CommonError.getMessage()
             throw new IllegalStateException(CommonError.TEAM_MEMBER_FIELD_ERROR.getMessage());
         }
     }
