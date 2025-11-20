@@ -1,16 +1,26 @@
+// src/main/java/com/moau/moau/team/repository/TeamMemberRepository.java
 package com.moau.moau.team.repository;
 
+import com.moau.moau.team.domain.Team;
 import com.moau.moau.team.domain.TeamMember;
 import com.moau.moau.team.domain.TeamMemberId;
+import com.moau.moau.team.domain.TeamMemberStatus;
+import com.moau.moau.user.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
-@Repository
 public interface TeamMemberRepository extends JpaRepository<TeamMember, TeamMemberId> {
 
-    // [✅ 추가]
-    // 특정 사용자 ID(userId)를 기준으로, 해당 유저가 속한 모든 팀 멤버 정보를 조회합니다.
+    boolean existsByTeamAndUser(Team team, User user);
+
     List<TeamMember> findByUserId(Long userId);
+
+    List<TeamMember> findAllByTeam(Team team);
+
+    Optional<TeamMember> findByTeamIdAndUserId(Long teamId, Long userId);
+
+
+    boolean existsByTeam_IdAndUser_IdAndStatus(Long teamId, Long userId, TeamMemberStatus status);
 }

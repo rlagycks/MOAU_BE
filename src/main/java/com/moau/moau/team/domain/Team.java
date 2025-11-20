@@ -1,22 +1,19 @@
 package com.moau.moau.team.domain;
 
 import com.moau.moau.global.domain.BaseId;
+import com.moau.moau.global.domain.BaseSoftDelete;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
+import lombok.*;
 import com.moau.moau.user.domain.User;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-
+@Setter
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "TEAMS") // [✅ 수정] "TEAMS" (대문자 복수형)
-public class Team extends BaseId {
+@Table(name = "TEAMS")
+public class Team extends BaseSoftDelete {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_user_id", nullable = false)
@@ -30,4 +27,18 @@ public class Team extends BaseId {
 
     @Column(name = "invite_code", length = 8, unique = true)
     private String inviteCode;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "dues_period", nullable = false)
+    @Builder.Default
+    private DuesPeriod duesPeriod = DuesPeriod.NONE;
+
+    @Column(name = "dues_amount", nullable = false)
+    @Builder.Default
+    private Long duesAmount = 0L;
+
+    public void updateDuesSetting(DuesPeriod period, Long amount) {
+        this.duesPeriod = period;
+        this.duesAmount = amount;
+    }
 }
