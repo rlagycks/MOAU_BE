@@ -2,6 +2,7 @@ package com.moau.moau.schedule.service;
 
 import com.moau.moau.global.exception.BusinessException;
 import com.moau.moau.global.exception.error.CommonError;
+import com.moau.moau.global.exception.error.ScheduleError;
 import com.moau.moau.global.util.SecurityUtil;
 import com.moau.moau.schedule.domain.Schedule;
 import com.moau.moau.schedule.dto.ScheduleCreateRequest;
@@ -20,6 +21,7 @@ import com.moau.moau.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.*;
 import java.util.List;
@@ -56,7 +58,7 @@ public class ScheduleService {
     // 2. 일정 상세 조회
     public ScheduleDetailResponse getScheduleDetail(Long scheduleId) {
         Schedule schedule = scheduleRepository.findById(scheduleId)
-                .orElseThrow(() -> new BusinessException(CommonError.SCHEDULE_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ScheduleError.SCHEDULE_NOT_FOUND));
 
         validateActiveMember(schedule.getTeam().getId());
 
@@ -66,8 +68,13 @@ public class ScheduleService {
     // 3. 단일 일정 수정
     @Transactional
     public Long updateSchedule(Long scheduleId, ScheduleUpdateRequest request) {
+
+        validateScheduleContent(request.getTitle(), request.getDescription());
+
+        validateTimeSequence(request.getStartsAt(), request.getEndsAt());
+
         Schedule schedule = scheduleRepository.findById(scheduleId)
-                .orElseThrow(() -> new BusinessException(CommonError.SCHEDULE_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ScheduleError.SCHEDULE_NOT_FOUND));
 
         validateAdminOrOwner(schedule.getTeam().getId());
 
@@ -89,7 +96,7 @@ public class ScheduleService {
     @Transactional
     public void deleteSchedule(Long scheduleId) {
         Schedule schedule = scheduleRepository.findById(scheduleId)
-                .orElseThrow(() -> new BusinessException(CommonError.SCHEDULE_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ScheduleError.SCHEDULE_NOT_FOUND));
 
         validateAdminOrOwner(schedule.getTeam().getId());
 
@@ -99,6 +106,11 @@ public class ScheduleService {
     // 5. 팀 일정 생성
     @Transactional
     public Long createSchedule(Long teamId, ScheduleCreateRequest request) {
+
+        validateScheduleContent(request.getTitle(), request.getDescription());
+
+        validateTimeSequence(request.getStartsAt(), request.getEndsAt());
+
         validateAdminOrOwner(teamId);
 
         normalizeScheduleTime(request);
@@ -141,7 +153,24 @@ public class ScheduleService {
                 .collect(Collectors.toList());
     }
 
-    // [내부 메서드 1] 단순 멤버십 확인
+    // [내부 메서드 1] 일정 내용(제목, 설명) 길이 검증
+    private void validateScheduleContent(String title, String description) {
+        if (!StringUtils.hasText(title) || title.length() > 50) {
+            throw new BusinessException(ScheduleError.INVALID_TITLE_LENGTH);
+        }
+        if (description != null && description.length() > 500) {
+            throw new BusinessException(ScheduleError.INVALID_DESCRIPTION_LENGTH);
+        }
+    }
+
+    // [내부 메서드 2] 시작 시간이 종료 시간보다 늦으면 예외 발생
+    private void validateTimeSequence(Instant startsAt, Instant endsAt) {
+        if (startsAt.isAfter(endsAt)) {
+            throw new BusinessException(ScheduleError.INVALID_SCHEDULE_PERIOD);
+        }
+    }
+
+    // [내부 메서드 3] 단순 멤버십 확인
     private void validateActiveMember(Long teamId) {
         Long currentUserId = SecurityUtil.getCurrentUserId();
         boolean isMember = teamMemberRepository.existsByTeam_IdAndUser_IdAndStatus(
@@ -152,7 +181,7 @@ public class ScheduleService {
         }
     }
 
-    // [내부 메서드 2] 관리자/오너 권한 확인
+    // [내부 메서드 4] 관리자/오너 권한 확인
     private void validateAdminOrOwner(Long teamId) {
         Long currentUserId = SecurityUtil.getCurrentUserId();
         TeamMember member = teamMemberRepository.findByTeamIdAndUserId(teamId, currentUserId)
@@ -166,26 +195,22 @@ public class ScheduleService {
         }
     }
 
-    // [내부 메서드 3] 시간 정규화 로직 (생성용)
-    // 기간이 다르거나 isAllDay가 true면 시간을 00:00:00 ~ 23:59:59로 강제 조정
+    // [내부 메서드 5] 시간 정규화 (생성용)
     private void normalizeScheduleTime(ScheduleCreateRequest request) {
         ZoneId KST = ZoneId.of("Asia/Seoul");
         LocalDate startDate = request.getStartsAt().atZone(KST).toLocalDate();
         LocalDate endDate = request.getEndsAt().atZone(KST).toLocalDate();
 
-        // 1. 날짜가 다르면 무조건 기간 일정(종일)으로 취급
         if (!startDate.equals(endDate)) {
             request.setAllDay(true);
         }
-
-        // 2. 종일 일정(기간 포함)이라면 시간을 하루 전체로 확장
         if (request.isAllDay()) {
             request.setStartsAt(startDate.atStartOfDay(KST).toInstant());
             request.setEndsAt(endDate.atTime(LocalTime.MAX).atZone(KST).toInstant());
         }
     }
 
-    // [내부 메서드 4] 시간 정규화 로직 (수정용 - 오버로딩)
+    // [내부 메서드 6] 시간 정규화 (수정용)
     private void normalizeScheduleTime(ScheduleUpdateRequest request) {
         ZoneId KST = ZoneId.of("Asia/Seoul");
         LocalDate startDate = request.getStartsAt().atZone(KST).toLocalDate();
@@ -194,7 +219,6 @@ public class ScheduleService {
         if (!startDate.equals(endDate)) {
             request.setAllDay(true);
         }
-
         if (request.isAllDay()) {
             request.setStartsAt(startDate.atStartOfDay(KST).toInstant());
             request.setEndsAt(endDate.atTime(LocalTime.MAX).atZone(KST).toInstant());
