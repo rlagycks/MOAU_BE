@@ -23,6 +23,13 @@ spring:
       access-token-expiration-msec: ${SPRING_SECURITY_JWT_ACCESSTOKENEXPIRATIONMSEC}
       refresh-token-expiration-msec: ${SPRING_SECURITY_JWT_REFRESHTOKENEXPIRATIONMSEC}
 
+  cloud:
+    aws:
+      region:
+        static: ${AWS_REGION}
+      s3:
+        bucket: ${AWS_S3_BUCKET}
+
 app:
   kakao:
     rest-api-key: ${APP_KAKAO_REST_API_KEY}
@@ -38,13 +45,6 @@ app:
 
   openai:
     api-key: ${APP_OPENAI_API_KEY}
-
-cloud:
-  aws:
-    region:
-      static: ${AWS_REGION}
-    s3:
-      bucket: ${AWS_S3_BUCKET}
 
 management:
   endpoints:
