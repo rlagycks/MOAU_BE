@@ -1,5 +1,6 @@
 package com.moau.moau.request.service;
 
+import com.moau.moau.global.exception.error.CommonError;
 import com.moau.moau.request.domain.JoinRequest;
 import com.moau.moau.request.domain.JoinRequestFactory;
 import com.moau.moau.request.domain.JoinRequestStatus;
@@ -24,32 +25,36 @@ public class TeamJoinRequestService {
     private final UserRepository users;
     private final JoinRequestRepository joinRequests;
     private final TeamMemberRepository teamMembers;
-    // private final TeamAuthorizationService teamAuth; // [삭제]
 
+    /** 초대코드로 가입 신청 */
     @Transactional
     public void requestJoinByInviteCode(String inviteCode, Long userId) {
+
         Team team = teams.findByInviteCodeAndDeletedAtIsNull(inviteCode)
-                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 초대 코드입니다."));
+                .orElseThrow(() ->
+                        new IllegalStateException(CommonError.INVITE_CODE_INVALID.getMessage())
+                );
 
         User user = users.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() ->
+                        new IllegalStateException(CommonError.USER_NOT_FOUND.getMessage())
+                );
 
         if (teamMembers.existsByTeamAndUser(team, user)) {
-            throw new IllegalStateException("이미 이 팀의 멤버입니다.");
+            throw new IllegalStateException(CommonError.TEAM_MEMBER_ALREADY_EXISTS.getMessage());
         }
 
         if (joinRequests.existsByTeamAndRequestUserAndStatus(team, user, JoinRequestStatus.PENDING)) {
-            throw new IllegalStateException("이미 가입 신청이 접수된 상태입니다.");
+            throw new IllegalStateException(CommonError.JOIN_REQUEST_ALREADY_EXISTS.getMessage());
         }
 
         JoinRequest req = JoinRequestFactory.createPending(team, user);
         joinRequests.save(req);
     }
 
+    /** 팀의 모든 Pending 요청 조회 */
     @Transactional(readOnly = true)
-    public List<TeamJoinPendingResponse> getPendingRequests(Long teamId) { // [수정] actorUserId 제거
-        // [삭제] teamAuth.requireAdminOrOwner(actorUserId, teamId); (인터셉터가 처리함)
-
+    public List<TeamJoinPendingResponse> getPendingRequests(Long teamId) {
         return joinRequests.findAllByTeamIdAndStatus(teamId, JoinRequestStatus.PENDING)
                 .stream()
                 .map(TeamJoinPendingResponse::from)

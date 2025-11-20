@@ -1,4 +1,3 @@
-// src/main/java/com/moau/moau/user/presentation/UserController.java
 package com.moau.moau.user.controller;
 
 import com.moau.moau.global.exception.error.CommonError;
@@ -14,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/users")
-public class UserController {
+public class UserController implements UserControllerSwagger{
 
     private final UserQueryService users;
     private final UserCommandService userCommandService;

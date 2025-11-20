@@ -1,10 +1,12 @@
 package com.moau.moau.test.controller;
 
+import com.moau.moau.auth.controller.AuthControllerSwagger;
 import com.moau.moau.jwt.ports.JwtIssuerPort;
 import com.moau.moau.token.service.TokenRefreshService;
 import com.moau.moau.user.service.UserCommandService;
 import com.moau.moau.user.domain.User;
 import com.moau.moau.auth.dto.response.CodeExchangeResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
@@ -17,12 +19,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/auth/test")
 @RequiredArgsConstructor
-public class TestAuthController {
+@Tag(name = "🛡️ Auth")
+
+public class TestAuthController  {
 
     private final UserCommandService userCommandService;
     private final JwtIssuerPort jwtIssuerPort;
     private final TokenRefreshService tokenRefreshService;
 
+    @AuthControllerSwagger.TestLogin
     @GetMapping("/login")
     public ResponseEntity<CodeExchangeResponse> testLogin(
             @RequestParam(defaultValue = "test@moau.com") String email

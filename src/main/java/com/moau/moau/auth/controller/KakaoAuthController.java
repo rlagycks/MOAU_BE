@@ -1,10 +1,12 @@
 // src/main/java/com/moau/moau/user/presentation/auth/KakaoAuthController.java
 package com.moau.moau.auth.controller;
 
+import com.moau.moau.auth.controller.AuthControllerSwagger;
 import com.moau.moau.global.exception.error.CommonError;
 import com.moau.moau.auth.service.KakaoAuthService;
 import com.moau.moau.auth.dto.request.CodeExchangeRequest;
 import com.moau.moau.auth.dto.response.CodeExchangeResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -13,7 +15,9 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/auth/kakao")
 @RequiredArgsConstructor
-public class KakaoAuthController {
+@Tag(name = "🛡️ Auth")
+
+public class KakaoAuthController  {
 
     private final KakaoAuthService kakaoAuthService;
 
@@ -24,6 +28,7 @@ public class KakaoAuthController {
      *   "accessToken": "v1K34f..."
      * }
      */
+    @AuthControllerSwagger.ExchangeCode
     @PostMapping("/code/exchange")
     public ResponseEntity<?> exchangeCode(@Valid @RequestBody CodeExchangeRequest request) {
         if (request.accessToken() == null || request.accessToken().isBlank()) {
