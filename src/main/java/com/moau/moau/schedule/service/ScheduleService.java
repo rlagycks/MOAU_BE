@@ -2,6 +2,7 @@ package com.moau.moau.schedule.service;
 
 import com.moau.moau.global.exception.BusinessException;
 import com.moau.moau.global.exception.error.CommonError;
+import com.moau.moau.global.exception.error.ScheduleError;
 import com.moau.moau.global.util.SecurityUtil;
 import com.moau.moau.schedule.domain.Schedule;
 import com.moau.moau.schedule.dto.ScheduleCreateRequest;
@@ -20,10 +21,9 @@ import com.moau.moau.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
-import java.time.Instant;
-import java.time.YearMonth;
-import java.time.ZoneId;
+import java.time.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -48,7 +48,7 @@ public class ScheduleService {
         Instant startOfMonth = yearMonth.atDay(1).atStartOfDay(ZoneId.of("Asia/Seoul")).toInstant();
         Instant endOfMonth = yearMonth.atEndOfMonth().atTime(23, 59, 59).atZone(ZoneId.of("Asia/Seoul")).toInstant();
 
-        List<Schedule> schedules = scheduleRepository.findByTeam_IdAndStartsAtBetween(teamId, startOfMonth, endOfMonth);
+        List<Schedule> schedules = scheduleRepository.findOverlappingSchedules(teamId, startOfMonth, endOfMonth);
 
         return schedules.stream()
                 .map(ScheduleResponse::from)
@@ -58,7 +58,7 @@ public class ScheduleService {
     // 2. 일정 상세 조회
     public ScheduleDetailResponse getScheduleDetail(Long scheduleId) {
         Schedule schedule = scheduleRepository.findById(scheduleId)
-                .orElseThrow(() -> new BusinessException(CommonError.SCHEDULE_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ScheduleError.SCHEDULE_NOT_FOUND));
 
         validateActiveMember(schedule.getTeam().getId());
 
@@ -68,10 +68,17 @@ public class ScheduleService {
     // 3. 단일 일정 수정
     @Transactional
     public Long updateSchedule(Long scheduleId, ScheduleUpdateRequest request) {
+
+        validateScheduleContent(request.getTitle(), request.getDescription());
+
+        validateTimeSequence(request.getStartsAt(), request.getEndsAt());
+
         Schedule schedule = scheduleRepository.findById(scheduleId)
-                .orElseThrow(() -> new BusinessException(CommonError.SCHEDULE_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ScheduleError.SCHEDULE_NOT_FOUND));
 
         validateAdminOrOwner(schedule.getTeam().getId());
+
+        normalizeScheduleTime(request);
 
         schedule.update(
                 request.getTitle(),
@@ -89,7 +96,7 @@ public class ScheduleService {
     @Transactional
     public void deleteSchedule(Long scheduleId) {
         Schedule schedule = scheduleRepository.findById(scheduleId)
-                .orElseThrow(() -> new BusinessException(CommonError.SCHEDULE_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ScheduleError.SCHEDULE_NOT_FOUND));
 
         validateAdminOrOwner(schedule.getTeam().getId());
 
@@ -99,7 +106,14 @@ public class ScheduleService {
     // 5. 팀 일정 생성
     @Transactional
     public Long createSchedule(Long teamId, ScheduleCreateRequest request) {
+
+        validateScheduleContent(request.getTitle(), request.getDescription());
+
+        validateTimeSequence(request.getStartsAt(), request.getEndsAt());
+
         validateAdminOrOwner(teamId);
+
+        normalizeScheduleTime(request);
 
         Long currentUserId = SecurityUtil.getCurrentUserId();
 
@@ -132,41 +146,82 @@ public class ScheduleService {
         Instant startOfMonth = yearMonth.atDay(1).atStartOfDay(ZoneId.of("Asia/Seoul")).toInstant();
         Instant endOfMonth = yearMonth.atEndOfMonth().atTime(23, 59, 59).atZone(ZoneId.of("Asia/Seoul")).toInstant();
 
-        List<Schedule> schedules = scheduleRepository.findByTeam_IdInAndStartsAtBetween(myTeamIds, startOfMonth, endOfMonth);
+        List<Schedule> schedules = scheduleRepository.findOverlappingSchedulesByTeamIds(myTeamIds, startOfMonth, endOfMonth);
 
         return schedules.stream()
                 .map(ScheduleResponse::from)
                 .collect(Collectors.toList());
     }
 
-    // 단순 멤버십 확인
+    // [내부 메서드 1] 일정 내용(제목, 설명) 길이 검증
+    private void validateScheduleContent(String title, String description) {
+        if (!StringUtils.hasText(title) || title.length() > 50) {
+            throw new BusinessException(ScheduleError.INVALID_TITLE_LENGTH);
+        }
+        if (description != null && description.length() > 500) {
+            throw new BusinessException(ScheduleError.INVALID_DESCRIPTION_LENGTH);
+        }
+    }
+
+    // [내부 메서드 2] 시작 시간이 종료 시간보다 늦으면 예외 발생
+    private void validateTimeSequence(Instant startsAt, Instant endsAt) {
+        if (startsAt.isAfter(endsAt)) {
+            throw new BusinessException(ScheduleError.INVALID_SCHEDULE_PERIOD);
+        }
+    }
+
+    // [내부 메서드 3] 단순 멤버십 확인
     private void validateActiveMember(Long teamId) {
         Long currentUserId = SecurityUtil.getCurrentUserId();
-
         boolean isMember = teamMemberRepository.existsByTeam_IdAndUser_IdAndStatus(
-                teamId,
-                currentUserId,
-                TeamMemberStatus.ACTIVE
+                teamId, currentUserId, TeamMemberStatus.ACTIVE
         );
-
         if (!isMember) {
             throw new BusinessException(CommonError.ACCESS_DENIED);
         }
     }
 
-    // 관리자/오너 권한 확인
+    // [내부 메서드 4] 관리자/오너 권한 확인
     private void validateAdminOrOwner(Long teamId) {
         Long currentUserId = SecurityUtil.getCurrentUserId();
-
         TeamMember member = teamMemberRepository.findByTeamIdAndUserId(teamId, currentUserId)
                 .orElseThrow(() -> new BusinessException(CommonError.ACCESS_DENIED));
 
         if (member.getStatus() != TeamMemberStatus.ACTIVE) {
             throw new BusinessException(CommonError.ACCESS_DENIED);
         }
-
         if (!member.getRole().isAtLeast(TeamMemberRole.ADMIN)) {
             throw new BusinessException(CommonError.ACCESS_DENIED);
+        }
+    }
+
+    // [내부 메서드 5] 시간 정규화 (생성용)
+    private void normalizeScheduleTime(ScheduleCreateRequest request) {
+        ZoneId KST = ZoneId.of("Asia/Seoul");
+        LocalDate startDate = request.getStartsAt().atZone(KST).toLocalDate();
+        LocalDate endDate = request.getEndsAt().atZone(KST).toLocalDate();
+
+        if (!startDate.equals(endDate)) {
+            request.setAllDay(true);
+        }
+        if (request.isAllDay()) {
+            request.setStartsAt(startDate.atStartOfDay(KST).toInstant());
+            request.setEndsAt(endDate.atTime(LocalTime.MAX).atZone(KST).toInstant());
+        }
+    }
+
+    // [내부 메서드 6] 시간 정규화 (수정용)
+    private void normalizeScheduleTime(ScheduleUpdateRequest request) {
+        ZoneId KST = ZoneId.of("Asia/Seoul");
+        LocalDate startDate = request.getStartsAt().atZone(KST).toLocalDate();
+        LocalDate endDate = request.getEndsAt().atZone(KST).toLocalDate();
+
+        if (!startDate.equals(endDate)) {
+            request.setAllDay(true);
+        }
+        if (request.isAllDay()) {
+            request.setStartsAt(startDate.atStartOfDay(KST).toInstant());
+            request.setEndsAt(endDate.atTime(LocalTime.MAX).atZone(KST).toInstant());
         }
     }
 }
