@@ -28,12 +28,12 @@ public class ReceiptReviewController implements ReceiptReviewApi {
 
     @Override
     @GetMapping
-    public ResponseEntity<ResponseDto<Page<ReceiptReviewDto>>> getPendingReviews(
+    public ResponseEntity<ResponseDto<Page<ReceiptReviewDto>>> getReceiptReviews(
             @PathVariable Long teamId,
-            @RequestParam(required = false, defaultValue = "PENDING_APPROVAL") ReviewStatus status,
+            @RequestParam(required = false) ReviewStatus status,
             @PageableDefault(sort = "requestedAt", direction = Sort.Direction.DESC, size = 10) Pageable pageable
     ) {
-        Page<ReceiptReviewDto> responseDto = receiptReviewQueryService.getPendingReviews(teamId, status, pageable);
+        Page<ReceiptReviewDto> responseDto = receiptReviewQueryService.getReceiptReviews(teamId, status, pageable);
         return ResponseEntity.ok(ResponseDto.data(responseDto));
     }
 
