@@ -23,14 +23,17 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/teams/{teamId}/accounting/reviews/receipts")
 public interface ReceiptReviewApi {
 
-    @Operation(summary = "승인/반려/대기 목록 조회", description = "(Auth: ADMIN)")
+    @Operation(summary = "영수증 검토 내역 조회 (전체/상태별)",
+            description = "(Auth: MEMBER/ADMIN) 영수증 검토 내역을 조회합니다. <br>status 파라미터가 없으면 **전체 조회**, 있으면 **해당 상태만 필터링**합니다.")
     @ApiResponse(responseCode = "200", description = "조회 성공",
-            content = @Content(schema = @Schema(implementation = Page.class))) // (Page<ReceiptReviewDto>)
+            content = @Content(schema = @Schema(implementation = Page.class)))
     @GetMapping
-    ResponseEntity<ResponseDto<Page<ReceiptReviewDto>>> getPendingReviews(
+    ResponseEntity<ResponseDto<Page<ReceiptReviewDto>>> getReceiptReviews(
             @Parameter(description = "팀 ID", required = true) @PathVariable Long teamId,
-            @Parameter(description = "조회할 상태 (기본값: PENDING_APPROVAL)")
-            @RequestParam(required = false, defaultValue = "PENDING_APPROVAL") ReviewStatus status,
+
+            @Parameter(description = "조회할 상태 (없으면 전체 조회)")
+            @RequestParam(required = false) ReviewStatus status,
+
             @Parameter(hidden = true) Pageable pageable
     );
 
