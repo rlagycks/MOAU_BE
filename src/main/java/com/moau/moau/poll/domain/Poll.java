@@ -3,35 +3,45 @@ package com.moau.moau.poll.domain;
 import com.moau.moau.global.domain.BaseId;
 import com.moau.moau.notice.domain.Notice;
 import jakarta.persistence.*;
-import com.moau.moau.user.domain.User;
-
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor; // [✅ @Builder를 위해 추가]
-import lombok.Builder; // [✅ 추가]
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
+import java.time.LocalDate;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor // [✅ @Builder를 위해 추가]
-@Builder // [✅ 추가]
 @Entity
-@Table(name = "POLLS") // [✅ 규칙 통일]
+@Table(name = "polls")
 public class Poll extends BaseId {
-
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "NOTICE_ID", nullable = false) // [✅ 대문자 통일]
+    @JoinColumn(name = "notice_id", nullable = false)
     private Notice notice;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "CREATED_BY", nullable = false) // [✅ 대문자 통일]
-    private User creator;
+    @Column(nullable = false)
+    private String title;
 
-    @Column(name = "result_visibility", nullable = false)
-    private String resultVisibility; // ENUM
+    @Column(name = "allow_multiple", nullable = false)
+    private boolean allowMultiple;
 
-    @Column(name = "closes_at")
-    private Instant closesAt;
+    @Column(name = "is_anonymous", nullable = false)
+    private boolean isAnonymous;
+
+    @Column(name = "deadline")
+    private LocalDate deadline;
+
+    @Builder
+    public Poll(Notice notice, String title, boolean allowMultiple, boolean isAnonymous, LocalDate deadline) {
+        this.notice = notice;
+        this.title = title;
+        this.allowMultiple = allowMultiple;
+        this.isAnonymous = isAnonymous;
+        this.deadline = deadline;
+    }
+
+    public boolean isClosed() {
+        if (deadline == null) return false;
+        return LocalDate.now().isAfter(deadline);
+    }
 }

@@ -1,12 +1,9 @@
 package com.moau.moau.notice.domain;
 
-import com.moau.moau.global.domain.BaseId;
-import com.moau.moau.team.domain.Team;
+import com.moau.moau.global.domain.BaseSoftDelete;
 import jakarta.persistence.*;
-import com.moau.moau.user.domain.User;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor; // [✅ @Builder를 위해 추가]
-import lombok.Builder; // [✅ 추가]
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -14,33 +11,46 @@ import java.time.Instant;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor // [✅ @Builder를 위해 추가]
-@Builder // [✅ 추가]
 @Entity
-@Table(name = "NOTICES") // [✅ 규칙 통일]
-public class Notice extends BaseId {
+@Table(name = "notices")
+public class Notice extends BaseSoftDelete {
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "TEAM_ID", nullable = false) // [✅ 수정] "group_id" -> "TEAM_ID"
-    private Team team;
+    @Column(name = "team_id", nullable = false)
+    private Long teamId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "AUTHOR_USER_ID", nullable = false) // [✅ 대문자 통일]
-    private User author;
+    @Column(name = "author_user_id", nullable = false)
+    private Long authorUserId;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 100)
     private String title;
 
     @Lob
     @Column(nullable = false)
-    private String body;
+    private String content;
 
     @Column(name = "is_pinned", nullable = false)
-    private Boolean isPinned = false;
+    private boolean isPinned;
 
-    @Column(nullable = false)
-    private String status; // ENUM
+    @Column(name = "has_poll", nullable = false)
+    private boolean hasPoll;
 
-    @Column(name = "published_at")
-    private Instant publishedAt;
+    @Builder
+    public Notice(Long teamId, Long authorUserId, String title, String content, boolean isPinned, boolean hasPoll) {
+        this.teamId = teamId;
+        this.authorUserId = authorUserId;
+        this.title = title;
+        this.content = content;
+        this.isPinned = isPinned;
+        this.hasPoll = hasPoll;
+    }
+
+    public void update(String title, String content, boolean isPinned) {
+        this.title = title;
+        this.content = content;
+        this.isPinned = isPinned;
+    }
+
+    public void delete() {
+        this.markDeleted(Instant.now());
+    }
 }
