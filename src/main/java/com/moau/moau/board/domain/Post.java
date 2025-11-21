@@ -1,4 +1,4 @@
-package com.moau.moau.notice.domain;
+package com.moau.moau.board.domain;
 
 import com.moau.moau.global.domain.BaseSoftDelete;
 import jakarta.persistence.*;
@@ -12,8 +12,8 @@ import java.time.Instant;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name = "notices")
-public class Notice extends BaseSoftDelete {
+@Table(name = "posts")
+public class Post extends BaseSoftDelete {
 
     @Column(name = "team_id", nullable = false)
     private Long teamId;
@@ -28,26 +28,33 @@ public class Notice extends BaseSoftDelete {
     @Column(nullable = false)
     private String content;
 
-    @Column(name = "is_pinned", nullable = false)
-    private boolean isPinned;
+    @Column(name = "is_anonymous", nullable = false)
+    private boolean isAnonymous;
 
-    @Column(name = "has_poll", nullable = false)
-    private boolean hasPoll;
+    @Column(name = "comment_count", nullable = false)
+    private int commentCount = 0;
 
     @Builder
-    public Notice(Long teamId, Long authorUserId, String title, String content, boolean isPinned, boolean hasPoll) {
+    public Post(Long teamId, Long authorUserId, String title, String content, boolean isAnonymous) {
         this.teamId = teamId;
         this.authorUserId = authorUserId;
         this.title = title;
         this.content = content;
-        this.isPinned = isPinned;
-        this.hasPoll = hasPoll;
+        this.isAnonymous = isAnonymous;
     }
 
-    public void update(String title, String content, boolean isPinned) {
+    public void update(String title, String content, boolean isAnonymous) {
         this.title = title;
         this.content = content;
-        this.isPinned = isPinned;
+        this.isAnonymous = isAnonymous;
+    }
+
+    public void increaseCommentCount() {
+        this.commentCount++;
+    }
+
+    public void decreaseCommentCount() {
+        if (this.commentCount > 0) this.commentCount--;
     }
 
     public void delete() {
