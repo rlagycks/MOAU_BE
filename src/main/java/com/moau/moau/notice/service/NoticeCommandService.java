@@ -1,10 +1,14 @@
 package com.moau.moau.notice.service;
 
+import com.moau.moau.accounting.receipt.port.StorageServicePort;
+import com.moau.moau.accounting.receipt.dto.response.PresignedUrlResponseDto;
 import com.moau.moau.global.exception.BusinessException;
 import com.moau.moau.global.exception.error.CommonError;
 import com.moau.moau.notice.domain.Notice;
+import com.moau.moau.notice.domain.NoticeImage;
 import com.moau.moau.notice.dto.request.NoticeCreateRequestDto;
 import com.moau.moau.global.exception.error.NoticeError;
+import com.moau.moau.notice.repository.NoticeImageRepository;
 import com.moau.moau.notice.repository.NoticeRepository;
 import com.moau.moau.poll.domain.Poll;
 import com.moau.moau.poll.domain.PollOption;
@@ -15,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -23,17 +28,22 @@ import java.util.List;
 public class NoticeCommandService {
 
     private final NoticeRepository noticeRepository;
+    private final NoticeImageRepository noticeImageRepository;
     private final PollRepository pollRepository;
     private final PollOptionRepository pollOptionRepository;
     private final TeamRepository teamRepository;
 
-    // 공지사항 생성 (투표 포함 가능)
+    private final StorageServicePort storageServicePort;
+
+    public PresignedUrlResponseDto createPresignedUrl(String filename) {
+        return storageServicePort.createPresignedUrl(filename);
+    }
+
     public Long createNotice(Long userId, Long teamId, NoticeCreateRequestDto dto) {
         if (!teamRepository.existsById(teamId)) {
             throw new BusinessException(CommonError.TEAM_NOT_FOUND);
         }
 
-        // 1. Notice 생성
         boolean hasPoll = (dto.poll() != null);
         Notice notice = Notice.builder()
                 .teamId(teamId)
@@ -46,12 +56,34 @@ public class NoticeCommandService {
 
         Notice savedNotice = noticeRepository.save(notice);
 
-        // 2. Poll 생성 (있다면)
+        if (dto.imageKeys() != null && !dto.imageKeys().isEmpty()) {
+            List<NoticeImage> images = new ArrayList<>();
+            for (int i = 0; i < dto.imageKeys().size(); i++) {
+                images.add(NoticeImage.builder()
+                        .notice(savedNotice)
+                        .imageKey(dto.imageKeys().get(i))
+                        .sortOrder(i)
+                        .build());
+            }
+            noticeImageRepository.saveAll(images);
+        }
+
         if (hasPoll) {
             createPoll(savedNotice, dto.poll());
         }
 
         return savedNotice.getId();
+    }
+
+    public void deleteNotice(Long userId, Long teamId, Long noticeId) {
+        Notice notice = noticeRepository.findByIdAndTeamIdAndDeletedAtIsNull(noticeId, teamId)
+                .orElseThrow(() -> new BusinessException(NoticeError.NOTICE_NOT_FOUND));
+
+        if (!notice.getAuthorUserId().equals(userId)) {
+            throw new BusinessException(CommonError.ACCESS_DENIED);
+        }
+
+        notice.delete();
     }
 
     private void createPoll(Notice notice, NoticeCreateRequestDto.PollCreateDto pollDto) {
@@ -64,7 +96,6 @@ public class NoticeCommandService {
                 .build();
         Poll savedPoll = pollRepository.save(poll);
 
-        // 옵션 생성
         List<PollOption> options = pollDto.options().stream()
                 .map(text -> PollOption.builder()
                         .poll(savedPoll)
@@ -72,12 +103,5 @@ public class NoticeCommandService {
                         .build())
                 .toList();
         pollOptionRepository.saveAll(options);
-    }
-
-    // 공지 삭제
-    public void deleteNotice(Long userId, Long noticeId) {
-        Notice notice = noticeRepository.findByIdAndDeletedAtIsNull(noticeId)
-                .orElseThrow(() -> new BusinessException(NoticeError.NOTICE_NOT_FOUND));
-        notice.delete();
     }
 }

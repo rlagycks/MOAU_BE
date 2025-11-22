@@ -1,5 +1,7 @@
 package com.moau.moau.notice.controller;
 
+import com.moau.moau.accounting.receipt.dto.request.PresignedUrlRequestDto;
+import com.moau.moau.accounting.receipt.dto.response.PresignedUrlResponseDto;
 import com.moau.moau.global.payload.ResponseDto;
 import com.moau.moau.global.security.SecurityUtil;
 import com.moau.moau.global.security.CheckTeamRole;
@@ -15,8 +17,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,6 +33,16 @@ public class NoticeController implements NoticeControllerSwagger {
 
     @Override
     @CheckTeamRole(TeamMemberRole.ADMIN)
+    public ResponseEntity<ResponseDto<PresignedUrlResponseDto>> createPresignedUrl(
+            @PathVariable Long teamId,
+            @Valid @RequestBody PresignedUrlRequestDto requestDto
+    ) {
+        PresignedUrlResponseDto responseDto = noticeCommandService.createPresignedUrl(requestDto.filename());
+        return ResponseEntity.ok(ResponseDto.data(responseDto));
+    }
+
+    @Override
+    @CheckTeamRole(TeamMemberRole.ADMIN)
     public ResponseEntity<ResponseDto<Long>> createNotice(
             @PathVariable Long teamId,
             @Valid @RequestBody NoticeCreateRequestDto requestDto
@@ -46,7 +56,7 @@ public class NoticeController implements NoticeControllerSwagger {
     @CheckTeamRole(TeamMemberRole.MEMBER)
     public ResponseEntity<ResponseDto<Page<NoticeResponseDto>>> getNotices(
             @PathVariable Long teamId,
-            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC, size = 10) Pageable pageable
+            Pageable pageable
     ) {
         return ResponseEntity.ok(ResponseDto.data(noticeQueryService.getNotices(teamId, pageable)));
     }
@@ -68,7 +78,7 @@ public class NoticeController implements NoticeControllerSwagger {
             @PathVariable Long noticeId
     ) {
         Long userId = SecurityUtil.getCurrentUserId();
-        noticeCommandService.deleteNotice(userId, noticeId);
+        noticeCommandService.deleteNotice(userId, teamId, noticeId);
         return ResponseEntity.ok(ResponseDto.message("공지사항이 삭제되었습니다."));
     }
 
