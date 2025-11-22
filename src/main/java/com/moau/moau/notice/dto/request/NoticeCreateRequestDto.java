@@ -16,6 +16,9 @@ public record NoticeCreateRequestDto(
 
         boolean isPinned, // 상단 고정 여부
 
+        @Size(max = 5, message = "이미지는 최대 5장까지 첨부할 수 있습니다.")
+        List<String> imageKeys,
+
         @Valid
         PollCreateDto poll
 ) {

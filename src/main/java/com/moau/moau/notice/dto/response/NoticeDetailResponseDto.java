@@ -11,6 +11,7 @@ public record NoticeDetailResponseDto(
         boolean isPinned,
         boolean isMyNotice,
         Instant createdAt,
+        List<String> imageUrls,
 
         PollDto poll
 ) {

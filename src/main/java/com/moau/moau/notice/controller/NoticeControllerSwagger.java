@@ -1,5 +1,7 @@
 package com.moau.moau.notice.controller;
 
+import com.moau.moau.accounting.receipt.dto.request.PresignedUrlRequestDto;
+import com.moau.moau.accounting.receipt.dto.response.PresignedUrlResponseDto;
 import com.moau.moau.global.exception.ErrorResponse;
 import com.moau.moau.global.payload.ResponseDto;
 import com.moau.moau.notice.dto.request.NoticeCreateRequestDto;
@@ -23,7 +25,16 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/teams/{teamId}/notices")
 public interface NoticeControllerSwagger {
 
-    @Operation(summary = "공지사항 작성", description = "(Auth: ADMIN) 공지사항을 작성합니다. (투표 포함 가능)")
+    // [신규 추가] 이미지 업로드 URL 발급
+    @Operation(summary = "공지 이미지 업로드 URL 발급", description = "(Auth: ADMIN) S3에 이미지를 업로드하기 위한 Pre-signed URL을 발급합니다.")
+    @ApiResponse(responseCode = "200", description = "발급 성공")
+    @PostMapping("/upload-url")
+    ResponseEntity<ResponseDto<PresignedUrlResponseDto>> createPresignedUrl(
+            @Parameter(description = "팀 ID", required = true) @PathVariable Long teamId,
+            @Valid @RequestBody PresignedUrlRequestDto requestDto
+    );
+
+    @Operation(summary = "공지사항 작성", description = "(Auth: ADMIN) 공지사항을 작성합니다. (투표 및 이미지 키 리스트 포함 가능)")
     @ApiResponse(responseCode = "201", description = "작성 성공")
     @PostMapping
     ResponseEntity<ResponseDto<Long>> createNotice(
@@ -31,6 +42,7 @@ public interface NoticeControllerSwagger {
             @Valid @RequestBody NoticeCreateRequestDto requestDto
     );
 
+    // ... (나머지 API 동일)
     @Operation(summary = "공지사항 목록 조회", description = "(Auth: MEMBER) 공지사항 목록을 페이징하여 조회합니다.")
     @ApiResponse(responseCode = "200", description = "조회 성공")
     @GetMapping
