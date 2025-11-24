@@ -12,8 +12,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
-
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -22,13 +20,15 @@ public class ReceiptReviewQueryService {
     private final ReceiptReviewRepository receiptReviewRepository;
     private final UserRepository userRepository;
 
-    // API 4.5: 승인 대기 목록 조회
-    public Page<ReceiptReviewDto> getPendingReviews(Long teamId, ReviewStatus status, Pageable pageable) {
-        if (status == null) {
-            status = ReviewStatus.PENDING_APPROVAL;
-        }
+    public Page<ReceiptReviewDto> getReceiptReviews(Long teamId, ReviewStatus status, Pageable pageable) {
 
-        Page<ReceiptReview> reviewPage = receiptReviewRepository.findByTeamIdAndStatus(teamId, status, pageable);
+        Page<ReceiptReview> reviewPage;
+
+        if (status == null) {
+            reviewPage = receiptReviewRepository.findByTeamId(teamId, pageable);
+        } else {
+            reviewPage = receiptReviewRepository.findByTeamIdAndStatus(teamId, status, pageable);
+        }
 
         // Page<Entity> -> Page<DTO> 변환
         return reviewPage.map(review -> {

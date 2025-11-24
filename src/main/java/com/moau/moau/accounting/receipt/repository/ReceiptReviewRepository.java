@@ -22,4 +22,6 @@ public interface ReceiptReviewRepository extends JpaRepository<ReceiptReview, Lo
 
     // (ReceiptDetailDto 조회용)
     Optional<ReceiptReview> findByReceiptId(Long receiptId);
+
+    Page<ReceiptReview> findByTeamId(Long teamId, Pageable pageable);
 }
