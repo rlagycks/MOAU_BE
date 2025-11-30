@@ -10,6 +10,7 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 
 import javax.crypto.SecretKey;
+import java.time.Instant;
 
 // JwtParserAdapter.java (불필요한 buildKey 삭제 버전)
 public class JwtParserAdapter implements JwtParserPort {
@@ -27,6 +28,9 @@ public class JwtParserAdapter implements JwtParserPort {
                     .build()
                     .parseSignedClaims(jwt)
                     .getPayload();
+            if (c.getExpiration() == null || c.getExpiration().toInstant().isBefore(Instant.now())) {
+                throw new IllegalStateException(CommonError.TOKEN_EXPIRED.getMessage());
+            }
 
             return new Parsed(
                     c.get("typ", String.class),

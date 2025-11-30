@@ -49,13 +49,18 @@ public class TeamRoleInterceptor implements HandlerInterceptor {
                 .getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
 
         if (pathVariables == null || !pathVariables.containsKey("teamId")) {
-            throw new BusinessException(CommonError.BAD_REQUEST);
+            throw new BusinessException(CommonError.BAD_REQUEST, "teamId path variable is required");
         }
-        Long teamId = Long.parseLong(pathVariables.get("teamId"));
+        Long teamId;
+        try {
+            teamId = Long.parseLong(pathVariables.get("teamId"));
+        } catch (NumberFormatException e) {
+            throw new BusinessException(CommonError.BAD_REQUEST, "teamId must be a number");
+        }
 
         // 4. DB에서 '사용자의 실제 권한' 가져오기
-        TeamMember member = teamMemberRepository.findByTeamIdAndUserId(teamId, userId)
-                .orElseThrow(() -> new BusinessException(CommonError.ACCESS_DENIED, "팀 멤버가 아닙니다."));
+        TeamMember member = teamMemberRepository.findActiveMember(teamId, userId)
+                .orElseThrow(() -> new BusinessException(CommonError.ACCESS_DENIED, "팀 멤버가 아니거나 비활성 상태입니다."));
 
         TeamMemberRole actualRole = member.getRole();
 

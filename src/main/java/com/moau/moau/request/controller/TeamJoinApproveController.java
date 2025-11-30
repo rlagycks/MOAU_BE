@@ -46,7 +46,7 @@ public class TeamJoinApproveController implements TeamJoinApproveControllerSwagg
             @PathVariable Long teamId,
             @PathVariable Long requestId
     ) {
-        approveService.approve(requestId);
+        approveService.approve(teamId, requestId);
         return ResponseEntity.ok("가입 신청이 승인되었습니다.");
     }
 
@@ -56,7 +56,7 @@ public class TeamJoinApproveController implements TeamJoinApproveControllerSwagg
             @PathVariable Long teamId,
             @PathVariable Long requestId
     ) {
-        approveService.reject(requestId);
+        approveService.reject(teamId, requestId);
         return ResponseEntity.ok("가입 신청이 거절되었습니다.");
     }
 }

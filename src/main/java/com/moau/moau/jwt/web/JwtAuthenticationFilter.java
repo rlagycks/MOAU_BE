@@ -7,13 +7,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.List;
 
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -21,16 +19,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtParserPort jwtParser;
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+
+        return path.startsWith("/api/auth/kakao")
+                || path.equals("/api/auth/refresh")
+                || path.startsWith("/swagger-ui")
+                || path.startsWith("/v3/api-docs")
+                || path.equals("/actuator/health");
+    }
+
+    @Override
     protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain)
             throws ServletException, IOException {
 
-        // 이미 인증된 경우 그대로 진행
         if (SecurityContextHolder.getContext().getAuthentication() != null) {
             chain.doFilter(req, res);
             return;
         }
 
-        // Authorization 헤더에서 Bearer 토큰 추출
         String header = req.getHeader("Authorization");
         if (!StringUtils.hasText(header) || !header.startsWith("Bearer ")) {
             chain.doFilter(req, res);
@@ -38,27 +45,40 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String token = header.substring(7);
+
         try {
             var parsed = jwtParser.parse(token);
 
-            // Access Token(AT)이 아니면 인증 처리하지 않음
             if (!"AT".equals(parsed.typ())) {
                 chain.doFilter(req, res);
                 return;
             }
 
-            // 권한 컬렉션은 필요 시 추가 가능 (현재는 없음)
             var auth = new UsernamePasswordAuthenticationToken(
-                    parsed.subject(),  // JWT subject = userId
+                    parsed.subject(),
                     null,
                     null
             );
             SecurityContextHolder.getContext().setAuthentication(auth);
 
         } catch (IllegalStateException e) {
-            // 토큰 만료/서명 오류 → 인증 없이 진행
+            writeUnauthorized(res, e.getMessage());
+            return;
         }
 
         chain.doFilter(req, res);
+    }
+
+    private void writeUnauthorized(HttpServletResponse res, String message) throws IOException {
+        res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        res.setContentType("application/json;charset=UTF-8");
+
+        res.getWriter().write("""
+            {
+                "status": 401,
+                "code": "UNAUTHORIZED",
+                "message": "%s"
+            }
+            """.formatted(message));
     }
 }
