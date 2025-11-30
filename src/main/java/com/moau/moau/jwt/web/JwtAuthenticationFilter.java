@@ -19,6 +19,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtParserPort jwtParser;
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+
+        return path.startsWith("/api/auth/kakao")
+                || path.equals("/api/auth/refresh")
+                || path.startsWith("/swagger-ui")
+                || path.startsWith("/v3/api-docs")
+                || path.equals("/actuator/health");
+    }
+
+    @Override
     protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain)
             throws ServletException, IOException {
 
@@ -51,16 +62,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             SecurityContextHolder.getContext().setAuthentication(auth);
 
         } catch (IllegalStateException e) {
-            // JWT 파서에서 던진 예외 메시지 == "만료된 토큰입니다." 등
             writeUnauthorized(res, e.getMessage());
-            return; // ★ 중요: 더 이상 진행시키면 안됨
+            return;
         }
 
         chain.doFilter(req, res);
     }
 
     private void writeUnauthorized(HttpServletResponse res, String message) throws IOException {
-        res.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401
+        res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         res.setContentType("application/json;charset=UTF-8");
 
         res.getWriter().write("""

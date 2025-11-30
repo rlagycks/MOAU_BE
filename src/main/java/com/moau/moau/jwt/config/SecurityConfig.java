@@ -25,39 +25,46 @@ public class SecurityConfig {
     ) throws Exception {
 
         http
-                // 1. (추천) httpBasic, formLogin 비활성화
+                // 기본 로그인 방식 비활성화
                 .httpBasic(basic -> basic.disable())
                 .formLogin(form -> form.disable())
 
-                // CSRF는 REST API라 비활성화
+                // REST API에서는 CSRF 사용 안함
                 .csrf(csrf -> csrf.disable())
-                // CORS 설정은 CorsConfig에서 세부 지정
+
+                // CORS는 CorsConfig에서 별도 처리
                 .cors(Customizer.withDefaults())
-                // 세션은 완전히 비활성화 (JWT만 사용)
+
+                // 세션 완전 비활성화 (JWT 기반)
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                // 2. (필수) authorizeHttpRequests 수정
+                // URL 접근 권한 설정
                 .authorizeHttpRequests(auth -> auth
-                        //  (1) 인증 없이 허용할 URL 목록
                         .requestMatchers(
-                                // 로그인/토큰 관련
+                                // ★ 카카오 로그인 공개 URL
+                                "/api/auth/kakao/login",
+                                "/api/auth/kakao/callback",
                                 "/api/auth/kakao/code/exchange",
+
+                                // 토큰 관련
                                 "/api/auth/refresh",
                                 "/api/auth/test/login",
 
-                                // 헬스체크, 파비콘
-                                "/actuator/health",
-                                "/favicon.ico",
-
-                                // (2) Swagger UI 관련 경로 추가
+                                // Swagger
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
-                                "/v3/api-docs/**"
+                                "/v3/api-docs/**",
+
+                                // 헬스 체크
+                                "/actuator/health",
+                                "/favicon.ico"
                         ).permitAll()
 
-                        // (3) 위에서 허용한 URL을 제외한 모든 요청은 인증 필요
+                        // 그 외 모든 API는 인증 필요
                         .anyRequest().authenticated()
                 )
+
+                // JWT 필터 등록
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
