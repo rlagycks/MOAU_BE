@@ -31,12 +31,18 @@ public class TeamJoinApproveService {
 
     /** 가입 승인 */
     @Transactional
-    public void approve(Long requestId) {
+    public void approve(Long teamId, Long requestId) {
 
         // 1) 승인자 조회
         Long approverUserId = SecurityUtil.getCurrentUserId();
         User approver = users.findById(approverUserId)
                 .orElseThrow(() -> new IllegalStateException(CommonError.USER_NOT_FOUND.getMessage()));
+
+        var approverMember = teamMembers.findActiveMember(teamId, approverUserId)
+                .orElseThrow(() -> new IllegalStateException(CommonError.ACCESS_DENIED.getMessage()));
+        if (!approverMember.getRole().isAtLeast(TeamMemberRole.ADMIN)) {
+            throw new IllegalStateException(CommonError.ACCESS_DENIED.getMessage());
+        }
 
         // 2) JoinRequest 조회
         JoinRequest req = joinRequests.findById(requestId)
@@ -44,6 +50,10 @@ public class TeamJoinApproveService {
 
         Team team = req.getTeam();
         User targetUser = req.getRequestUser();
+
+        if (!team.getId().equals(teamId) || team.isDeleted()) {
+            throw new IllegalStateException(CommonError.TEAM_NOT_FOUND.getMessage());
+        }
 
         // 3) 이미 처리된 요청인지 검사
         if (!JoinRequestStatus.PENDING.equals(req.getStatus())) {
@@ -71,14 +81,24 @@ public class TeamJoinApproveService {
 
     /** 가입 거절 */
     @Transactional
-    public void reject(Long requestId) {
+    public void reject(Long teamId, Long requestId) {
 
         Long approverUserId = SecurityUtil.getCurrentUserId();
         User approver = users.findById(approverUserId)
                 .orElseThrow(() -> new IllegalStateException(CommonError.USER_NOT_FOUND.getMessage()));
 
+        var approverMember = teamMembers.findActiveMember(teamId, approverUserId)
+                .orElseThrow(() -> new IllegalStateException(CommonError.ACCESS_DENIED.getMessage()));
+        if (!approverMember.getRole().isAtLeast(TeamMemberRole.ADMIN)) {
+            throw new IllegalStateException(CommonError.ACCESS_DENIED.getMessage());
+        }
+
         JoinRequest req = joinRequests.findById(requestId)
                 .orElseThrow(() -> new IllegalStateException(CommonError.JOIN_REQUEST_NOT_FOUND.getMessage()));
+
+        if (!req.getTeam().getId().equals(teamId) || req.getTeam().isDeleted()) {
+            throw new IllegalStateException(CommonError.TEAM_NOT_FOUND.getMessage());
+        }
 
         // 이미 처리된 요청인지
         if (!JoinRequestStatus.PENDING.equals(req.getStatus())) {

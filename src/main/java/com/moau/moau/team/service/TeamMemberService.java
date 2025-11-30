@@ -22,6 +22,18 @@ public class TeamMemberService {
     private final TeamMemberRepository teamMembers;
     private final UserRepository users;
 
+    private TeamMember requireMemberWithRole(Long teamId, Long userId, TeamMemberRole requiredRole) {
+        TeamMember member = teamMembers.findActiveMember(teamId, userId)
+                .orElseThrow(() ->
+                        new IllegalStateException(CommonError.ACCESS_DENIED.getMessage())
+                );
+
+        if (!member.getRole().isAtLeast(requiredRole)) {
+            throw new IllegalStateException(CommonError.ACCESS_DENIED.getMessage());
+        }
+        return member;
+    }
+
     /** 팀 멤버 목록 조회 */
     @Transactional(readOnly = true)
     public List<TeamMemberResponse> getTeamsMembers(Long teamId) {
@@ -74,6 +86,7 @@ public class TeamMemberService {
     public void leaveTeam(Long teamId) {
 
         Long currentUserId = SecurityUtil.getCurrentUserId();
+        requireMemberWithRole(teamId, currentUserId, TeamMemberRole.MEMBER);
 
         Team team = teams.findByIdAndDeletedAtIsNull(teamId)
                 .orElseThrow(() ->
@@ -104,6 +117,7 @@ public class TeamMemberService {
     public void changeMemberRole(Long teamId, Long targetUserId, TeamMemberRole newRole) {
 
         Long currentUserId = SecurityUtil.getCurrentUserId();
+        requireMemberWithRole(teamId, currentUserId, TeamMemberRole.OWNER);
 
         Team team = teams.findByIdAndDeletedAtIsNull(teamId)
                 .orElseThrow(() ->
@@ -138,6 +152,7 @@ public class TeamMemberService {
     public void kickMember(Long teamId, Long targetUserId) {
 
         Long currentUserId = SecurityUtil.getCurrentUserId();
+        requireMemberWithRole(teamId, currentUserId, TeamMemberRole.ADMIN);
 
         Team team = teams.findByIdAndDeletedAtIsNull(teamId)
                 .orElseThrow(() ->
@@ -168,6 +183,7 @@ public class TeamMemberService {
     public void transferOwner(Long teamId, Long newOwnerUserId) {
 
         Long currentUserId = SecurityUtil.getCurrentUserId();
+        requireMemberWithRole(teamId, currentUserId, TeamMemberRole.OWNER);
 
         Team team = teams.findByIdAndDeletedAtIsNull(teamId)
                 .orElseThrow(() ->
