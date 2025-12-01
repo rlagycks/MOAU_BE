@@ -6,8 +6,7 @@ import java.util.Optional;
 
 public interface BankAccountRepository extends JpaRepository<BankAccount, Long> {
 
-    Optional<BankAccount> findByTeamId(Long teamId);
-
+    Optional<BankAccount> findFirstByTeamId(Long teamId);
     boolean existsByTeamId(Long teamId);
     Optional<BankAccount> findByIdAndTeamId(Long id, Long teamId);
 }
