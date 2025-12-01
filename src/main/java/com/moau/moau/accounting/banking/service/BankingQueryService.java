@@ -12,6 +12,11 @@ import com.moau.moau.accounting.banking.repository.BankAccountRepository;
 import com.moau.moau.accounting.banking.repository.BankBalanceRepository;
 import com.moau.moau.accounting.banking.repository.BankTransactionRepository;
 import com.moau.moau.global.exception.BusinessException;
+import com.moau.moau.global.exception.error.CommonError;
+import com.moau.moau.global.security.SecurityUtil;
+import com.moau.moau.team.domain.TeamMemberRole;
+import com.moau.moau.team.repository.TeamMemberRepository;
+import com.moau.moau.team.repository.TeamRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,6 +36,8 @@ public class BankingQueryService {
     private final BankAccountRepository bankAccountRepository;
     private final BankBalanceRepository bankBalanceRepository;
     private final BankTransactionRepository bankTransactionRepository;
+    private final TeamMemberRepository teamMemberRepository;
+    private final TeamRepository teamRepository;
 
     public List<BankDto> getBankList() {
         return Arrays.stream(BankCode.values())
@@ -39,6 +46,9 @@ public class BankingQueryService {
     }
 
     public BalanceDto getAccountBalance(Long teamId) {
+        Long userId = SecurityUtil.getCurrentUserId();
+        requireMemberWithRole(teamId, userId, TeamMemberRole.MEMBER);
+
         BankAccount account = findAccountByTeamId(teamId);
         BankBalance latestBalance = bankBalanceRepository.findTopByBankAccountOrderByAsOfDesc(account)
                 .orElseThrow(() -> new BusinessException(BankingError.ACCOUNT_NOT_FOUND));
@@ -51,6 +61,9 @@ public class BankingQueryService {
     }
 
     public Page<BankTransactionDto> getAccountTransactions(Long teamId, LocalDate startDate, LocalDate endDate, Pageable pageable) {
+        Long userId = SecurityUtil.getCurrentUserId();
+        requireMemberWithRole(teamId, userId, TeamMemberRole.MEMBER);
+
         BankAccount account = findAccountByTeamId(teamId);
         LocalDate start = (startDate != null) ? startDate : LocalDate.of(1900, 1, 1);
         LocalDate end = (endDate != null) ? endDate : LocalDate.now();
@@ -62,7 +75,10 @@ public class BankingQueryService {
     }
 
     private BankAccount findAccountByTeamId(Long teamId) {
-        return bankAccountRepository.findByTeamId(teamId)
+        teamRepository.findByIdAndDeletedAtIsNull(teamId)
+                .orElseThrow(() -> new BusinessException(CommonError.TEAM_NOT_FOUND));
+
+        return bankAccountRepository.findFirstByTeamId(teamId)
                 .orElseThrow(() -> new BusinessException(BankingError.ACCOUNT_NOT_FOUND));
     }
 
@@ -73,5 +89,13 @@ public class BankingQueryService {
                 tx.getAmountCents(),
                 tx.getDescription()
         );
+    }
+
+    private void requireMemberWithRole(Long teamId, Long userId, TeamMemberRole requiredRole) {
+        var member = teamMemberRepository.findActiveMember(teamId, userId)
+                .orElseThrow(() -> new BusinessException(CommonError.ACCESS_DENIED));
+        if (!member.getRole().isAtLeast(requiredRole)) {
+            throw new BusinessException(CommonError.ACCESS_DENIED);
+        }
     }
 }
