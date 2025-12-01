@@ -7,7 +7,6 @@ import com.moau.moau.accounting.banking.repository.BankTransactionRepository;
 import com.moau.moau.accounting.banking.util.BankCode;
 import com.moau.moau.accounting.banking.dto.request.AccountRegisterRequestDto;
 import com.moau.moau.accounting.banking.dto.response.BankAccountDto;
-import com.moau.moau.accounting.common.domain.Category;
 import com.moau.moau.global.exception.error.CategoryError;
 import com.moau.moau.accounting.common.repository.CategoryRepository;
 import com.moau.moau.global.exception.error.BankingError;
@@ -15,6 +14,9 @@ import com.moau.moau.accounting.banking.repository.BankAccountRepository;
 import com.moau.moau.accounting.banking.repository.BankBalanceRepository;
 import com.moau.moau.global.exception.BusinessException;
 import com.moau.moau.global.exception.error.CommonError;
+import com.moau.moau.global.security.SecurityUtil;
+import com.moau.moau.team.domain.TeamMemberRole;
+import com.moau.moau.team.repository.TeamMemberRepository;
 import com.moau.moau.team.repository.TeamRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -33,14 +35,18 @@ public class BankingCommandService {
     private final TeamRepository teamRepository;
     private final BankTransactionRepository bankTransactionRepository;
     private final CategoryRepository categoryRepository;
+    private final TeamMemberRepository teamMemberRepository;
 
     public BankAccountDto registerAccount(Long teamId, AccountRegisterRequestDto dto) {
-        if (!teamRepository.existsById(teamId)) {
-            throw new BusinessException(CommonError.TEAM_NOT_FOUND);
-        }
-        if (bankAccountRepository.existsByTeamId(teamId)) {
+        teamRepository.findByIdAndDeletedAtIsNull(teamId)
+                .orElseThrow(() -> new BusinessException(CommonError.TEAM_NOT_FOUND));
+
+        Long currentUserId = SecurityUtil.getCurrentUserId();
+        requireMemberWithRole(teamId, currentUserId, TeamMemberRole.ADMIN);
+
+        bankAccountRepository.findFirstByTeamId(teamId).ifPresent(acc -> {
             throw new BusinessException(BankingError.ACCOUNT_ALREADY_REGISTERED);
-        }
+        });
 
         BankCode bankCode = BankCode.getByCode(dto.bankCode());
         String maskedNumber = maskAccountNumber(dto.accountNumber());
@@ -78,8 +84,14 @@ public class BankingCommandService {
     public void recordExpense(Long teamId, Long bankAccountId, Long amountCents, Long categoryId,
                               String description, LocalDate transactionDate, Long reviewId) {
 
+        Long currentUserId = SecurityUtil.getCurrentUserId();
+        requireMemberWithRole(teamId, currentUserId, TeamMemberRole.ADMIN);
+
         BankAccount account = bankAccountRepository.findByIdAndTeamId(bankAccountId, teamId)
                 .orElseThrow(() -> new BusinessException(BankingError.ACCOUNT_NOT_FOUND));
+
+        teamRepository.findByIdAndDeletedAtIsNull(teamId)
+                .orElseThrow(() -> new BusinessException(CommonError.TEAM_NOT_FOUND));
 
         categoryRepository.findByIdAndTeamId(categoryId, teamId)
                 .orElseThrow(() -> new BusinessException(CategoryError.NOT_FOUND));
@@ -100,9 +112,15 @@ public class BankingCommandService {
     public void recordIncome(Long teamId, Long bankAccountId, Long amountCents, Long categoryId,
                              String description, LocalDate transactionDate) {
 
+        Long currentUserId = SecurityUtil.getCurrentUserId();
+        requireMemberWithRole(teamId, currentUserId, TeamMemberRole.ADMIN);
+
         // 1. 계좌 소유권 검증
         BankAccount account = bankAccountRepository.findByIdAndTeamId(bankAccountId, teamId)
                 .orElseThrow(() -> new BusinessException(BankingError.ACCOUNT_NOT_FOUND));
+
+        teamRepository.findByIdAndDeletedAtIsNull(teamId)
+                .orElseThrow(() -> new BusinessException(CommonError.TEAM_NOT_FOUND));
 
         // 2. 카테고리 검증
         categoryRepository.findByIdAndTeamId(categoryId, teamId)
@@ -136,7 +154,20 @@ public class BankingCommandService {
     }
 
     private String maskAccountNumber(String number) {
-        if (number == null || number.length() <= 4) return "********";
-        return "********" + number.substring(number.length() - 4);
+        if (number == null || number.length() < 4) {
+            return "****";
+        }
+        int visible = 4;
+        String tail = number.substring(number.length() - visible);
+        int maskedLength = Math.max(0, number.length() - visible);
+        return "*".repeat(maskedLength) + tail;
+    }
+
+    private void requireMemberWithRole(Long teamId, Long userId, TeamMemberRole requiredRole) {
+        var member = teamMemberRepository.findActiveMember(teamId, userId)
+                .orElseThrow(() -> new BusinessException(CommonError.ACCESS_DENIED));
+        if (!member.getRole().isAtLeast(requiredRole)) {
+            throw new BusinessException(CommonError.ACCESS_DENIED);
+        }
     }
 }

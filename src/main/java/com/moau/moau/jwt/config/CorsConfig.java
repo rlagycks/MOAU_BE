@@ -21,6 +21,8 @@ public class CorsConfig {
         //    (예: "http://localhost:8080" - Swagger UI가 실행되는 주소)
         config.addAllowedOrigin("http://localhost:3000");
         config.addAllowedOrigin("http://localhost:8080");
+        config.addAllowedOrigin("https://moau.store");
+        config.addAllowedOrigin("http://localhost:8081");
         // (만약 모든 출처를 허용하려면 config.addAllowedOriginPattern("*");)
 
         // 3. 허용할 HTTP 메서드 (GET, POST, PUT, DELETE 등)

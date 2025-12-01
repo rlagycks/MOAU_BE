@@ -10,7 +10,12 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name = "bank_accounts")
+@Table(
+        name = "bank_accounts",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_bank_accounts_team", columnNames = "team_id")
+        }
+)
 public class BankAccount extends BaseId {
 
     @Column(name = "team_id", nullable = false)
