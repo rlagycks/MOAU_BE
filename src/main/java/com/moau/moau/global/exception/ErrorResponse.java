@@ -11,10 +11,16 @@ public record ErrorResponse(
         int status,          // HTTP status code
         String code,         // 비즈니스 에러 코드
         String message,      // 사용자 메시지
-        String path      // 요청 URI
+        String path,         // 요청 URI
+        Object detail        // 추가 정보(필드 오류 등)
 ) {
     public static ErrorResponse of(HttpStatus status, String code, String message,
                                    String path) {
-        return new ErrorResponse(Instant.now(), status.value(), code, message, path);
+        return new ErrorResponse(Instant.now(), status.value(), code, message, path, null);
+    }
+
+    public static ErrorResponse of(HttpStatus status, String code, String message,
+                                   String path, Object detail) {
+        return new ErrorResponse(Instant.now(), status.value(), code, message, path, detail);
     }
 }
