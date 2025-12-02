@@ -3,12 +3,15 @@ package com.moau.moau.accounting.receipt.apapter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.moau.moau.accounting.receipt.dto.response.AiReceiptResult;
+import com.moau.moau.global.exception.BusinessException;
+import com.moau.moau.global.exception.error.CommonError;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -86,9 +89,10 @@ public class OpenAiClient {
 
             return new AiReceiptResult(merchantName, amount, date, paymentMethod);
 
+        } catch (WebClientResponseException e) {
+            throw new BusinessException(CommonError.EXTERNAL_API_ERROR, e.getResponseBodyAsString(), e);
         } catch (Exception e) {
-            log.error("[AI] Extraction failed: {}", e.getMessage());
-            return new AiReceiptResult("분석 실패", 0L, LocalDate.now(), null);
+            throw new BusinessException(CommonError.EXTERNAL_API_ERROR, e.getMessage(), e);
         }
     }
 }

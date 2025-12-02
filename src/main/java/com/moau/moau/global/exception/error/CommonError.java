@@ -18,6 +18,7 @@ public enum CommonError implements BaseError {
     KAKAO_ACCESS_TOKEN_REQUIRED(HttpStatus.BAD_REQUEST, "KAKAO_ACCESS_TOKEN_REQUIRED", "카카오 accessToken 값이 필요합니다."),
     KAKAO_USERINFO_NOT_FOUND(HttpStatus.UNAUTHORIZED, "KAKAO_USERINFO_NOT_FOUND", "카카오 사용자 정보를 조회할 수 없습니다."),
     KAKAO_EMAIL_NOT_PROVIDED(HttpStatus.BAD_REQUEST, "KAKAO_EMAIL_NOT_PROVIDED", "카카오 계정에서 이메일 정보를 제공하지 않았습니다."),
+    EXTERNAL_API_ERROR(HttpStatus.BAD_GATEWAY, "EXTERNAL_API_ERROR", "외부 서비스 응답 오류입니다."),
 
     // REFRESH TOKEN
     REFRESH_TOKEN_INVALID_TYPE(HttpStatus.BAD_REQUEST, "REFRESH_TOKEN_INVALID_TYPE", "리프레시 토큰이 아닙니다."),
@@ -67,7 +68,9 @@ public enum CommonError implements BaseError {
 
     // ETC
     GROUP_NOT_FOUND(HttpStatus.NOT_FOUND, "GROUP_NOT_FOUND", "그룹을 찾을 수 없습니다."),
-    BAD_REQUEST(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "잘못된 요청입니다.");
+    DATA_INTEGRITY_VIOLATION(HttpStatus.CONFLICT, "DATA_INTEGRITY_VIOLATION", "데이터 무결성 위반이 발생했습니다."),
+    BAD_REQUEST(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "잘못된 요청입니다."),
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", "서버 오류가 발생했습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

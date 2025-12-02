@@ -1,5 +1,6 @@
 package com.moau.moau.request.service;
 
+import com.moau.moau.global.exception.BusinessException;
 import com.moau.moau.global.exception.error.CommonError;
 import com.moau.moau.request.domain.JoinRequest;
 import com.moau.moau.request.domain.JoinRequestFactory;
@@ -32,20 +33,20 @@ public class TeamJoinRequestService {
 
         Team team = teams.findByInviteCodeAndDeletedAtIsNull(inviteCode)
                 .orElseThrow(() ->
-                        new IllegalStateException(CommonError.INVITE_CODE_INVALID.getMessage())
+                        new BusinessException(CommonError.INVITE_CODE_INVALID)
                 );
 
         User user = users.findById(userId)
                 .orElseThrow(() ->
-                        new IllegalStateException(CommonError.USER_NOT_FOUND.getMessage())
+                        new BusinessException(CommonError.USER_NOT_FOUND)
                 );
 
         if (teamMembers.existsByTeamAndUser(team, user)) {
-            throw new IllegalStateException(CommonError.TEAM_MEMBER_ALREADY_EXISTS.getMessage());
+            throw new BusinessException(CommonError.TEAM_MEMBER_ALREADY_EXISTS);
         }
 
         if (joinRequests.existsByTeamAndRequestUserAndStatus(team, user, JoinRequestStatus.PENDING)) {
-            throw new IllegalStateException(CommonError.JOIN_REQUEST_ALREADY_EXISTS.getMessage());
+            throw new BusinessException(CommonError.JOIN_REQUEST_ALREADY_EXISTS);
         }
 
         JoinRequest req = JoinRequestFactory.createPending(team, user);

@@ -1,5 +1,6 @@
 package com.moau.moau.jwt.infra;
 
+import com.moau.moau.global.exception.BusinessException;
 import com.moau.moau.global.exception.error.CommonError;
 import com.moau.moau.jwt.ports.JwtParserPort;
 import com.moau.moau.jwt.config.JwtProps;
@@ -29,7 +30,7 @@ public class JwtParserAdapter implements JwtParserPort {
                     .parseSignedClaims(jwt)
                     .getPayload();
             if (c.getExpiration() == null || c.getExpiration().toInstant().isBefore(Instant.now())) {
-                throw new IllegalStateException(CommonError.TOKEN_EXPIRED.getMessage());
+                throw new BusinessException(CommonError.TOKEN_EXPIRED);
             }
 
             return new Parsed(
@@ -40,10 +41,10 @@ public class JwtParserAdapter implements JwtParserPort {
             );
         } catch (ExpiredJwtException e) {
             // 토큰 만료
-            throw new IllegalStateException(CommonError.TOKEN_EXPIRED.getMessage(), e);
+            throw new BusinessException(CommonError.TOKEN_EXPIRED, null, e);
         } catch (JwtException e) {
             // 서명 불일치, 파싱 실패 등 모든 토큰 유효성 문제
-            throw new IllegalStateException(CommonError.TOKEN_INVALID.getMessage(), e);
+            throw new BusinessException(CommonError.TOKEN_INVALID, null, e);
         }
     }
 }

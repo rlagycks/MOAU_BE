@@ -1,6 +1,7 @@
 // src/main/java/com/moau/moau/request/service/TeamJoinApproveService.java
 package com.moau.moau.request.service;
 
+import com.moau.moau.global.exception.BusinessException;
 import com.moau.moau.global.security.SecurityUtil;
 import com.moau.moau.global.exception.error.CommonError;
 import com.moau.moau.request.domain.JoinRequest;
@@ -36,33 +37,33 @@ public class TeamJoinApproveService {
         // 1) 승인자 조회
         Long approverUserId = SecurityUtil.getCurrentUserId();
         User approver = users.findById(approverUserId)
-                .orElseThrow(() -> new IllegalStateException(CommonError.USER_NOT_FOUND.getMessage()));
+                .orElseThrow(() -> new BusinessException(CommonError.USER_NOT_FOUND));
 
         var approverMember = teamMembers.findActiveMember(teamId, approverUserId)
-                .orElseThrow(() -> new IllegalStateException(CommonError.ACCESS_DENIED.getMessage()));
+                .orElseThrow(() -> new BusinessException(CommonError.ACCESS_DENIED));
         if (!approverMember.getRole().isAtLeast(TeamMemberRole.ADMIN)) {
-            throw new IllegalStateException(CommonError.ACCESS_DENIED.getMessage());
+            throw new BusinessException(CommonError.ACCESS_DENIED);
         }
 
         // 2) JoinRequest 조회
         JoinRequest req = joinRequests.findById(requestId)
-                .orElseThrow(() -> new IllegalStateException(CommonError.JOIN_REQUEST_NOT_FOUND.getMessage()));
+                .orElseThrow(() -> new BusinessException(CommonError.JOIN_REQUEST_NOT_FOUND));
 
         Team team = req.getTeam();
         User targetUser = req.getRequestUser();
 
         if (!team.getId().equals(teamId) || team.isDeleted()) {
-            throw new IllegalStateException(CommonError.TEAM_NOT_FOUND.getMessage());
+            throw new BusinessException(CommonError.TEAM_NOT_FOUND);
         }
 
         // 3) 이미 처리된 요청인지 검사
         if (!JoinRequestStatus.PENDING.equals(req.getStatus())) {
-            throw new IllegalStateException(CommonError.JOIN_REQUEST_ALREADY_HANDLED.getMessage());
+            throw new BusinessException(CommonError.JOIN_REQUEST_ALREADY_HANDLED);
         }
 
         // 4) 이미 팀 멤버인지 검사
         if (teamMembers.existsByTeamAndUser(team, targetUser)) {
-            throw new IllegalStateException(CommonError.TEAM_MEMBER_ALREADY_EXISTS.getMessage());
+            throw new BusinessException(CommonError.TEAM_MEMBER_ALREADY_EXISTS);
         }
 
         // 5) 팀 멤버 등록
@@ -85,24 +86,24 @@ public class TeamJoinApproveService {
 
         Long approverUserId = SecurityUtil.getCurrentUserId();
         User approver = users.findById(approverUserId)
-                .orElseThrow(() -> new IllegalStateException(CommonError.USER_NOT_FOUND.getMessage()));
+                .orElseThrow(() -> new BusinessException(CommonError.USER_NOT_FOUND));
 
         var approverMember = teamMembers.findActiveMember(teamId, approverUserId)
-                .orElseThrow(() -> new IllegalStateException(CommonError.ACCESS_DENIED.getMessage()));
+                .orElseThrow(() -> new BusinessException(CommonError.ACCESS_DENIED));
         if (!approverMember.getRole().isAtLeast(TeamMemberRole.ADMIN)) {
-            throw new IllegalStateException(CommonError.ACCESS_DENIED.getMessage());
+            throw new BusinessException(CommonError.ACCESS_DENIED);
         }
 
         JoinRequest req = joinRequests.findById(requestId)
-                .orElseThrow(() -> new IllegalStateException(CommonError.JOIN_REQUEST_NOT_FOUND.getMessage()));
+                .orElseThrow(() -> new BusinessException(CommonError.JOIN_REQUEST_NOT_FOUND));
 
         if (!req.getTeam().getId().equals(teamId) || req.getTeam().isDeleted()) {
-            throw new IllegalStateException(CommonError.TEAM_NOT_FOUND.getMessage());
+            throw new BusinessException(CommonError.TEAM_NOT_FOUND);
         }
 
         // 이미 처리된 요청인지
         if (!JoinRequestStatus.PENDING.equals(req.getStatus())) {
-            throw new IllegalStateException(CommonError.JOIN_REQUEST_ALREADY_HANDLED.getMessage());
+            throw new BusinessException(CommonError.JOIN_REQUEST_ALREADY_HANDLED);
         }
 
         // 거절 처리
