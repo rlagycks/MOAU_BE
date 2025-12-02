@@ -1,6 +1,7 @@
 // src/main/java/com/moau/moau/request/domain/JoinRequestFactory.java
 package com.moau.moau.request.domain;
 
+import com.moau.moau.global.exception.BusinessException;
 import com.moau.moau.global.exception.error.CommonError;
 import com.moau.moau.team.domain.Team;
 import com.moau.moau.user.domain.User;
@@ -47,8 +48,7 @@ public class JoinRequestFactory {
             field.set(target, value);
 
         } catch (NoSuchFieldException | IllegalAccessException e) {
-            // ⭐ 네 프로젝트 규칙: new IllegalStateException + CommonError 메시지
-            throw new IllegalStateException(CommonError.JOIN_REQUEST_FIELD_ERROR.getMessage());
+            throw new BusinessException(CommonError.JOIN_REQUEST_FIELD_ERROR, null, e);
         }
     }
 }

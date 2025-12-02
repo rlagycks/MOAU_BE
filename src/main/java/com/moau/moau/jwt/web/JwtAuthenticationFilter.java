@@ -10,6 +10,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import java.io.IOException;
 
@@ -17,6 +18,7 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtParserPort jwtParser;
+    private final HandlerExceptionResolver resolver;
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
@@ -61,24 +63,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             );
             SecurityContextHolder.getContext().setAuthentication(auth);
 
-        } catch (IllegalStateException e) {
-            writeUnauthorized(res, e.getMessage());
-            return;
+            chain.doFilter(req, res);
+        } catch (Exception e) {
+            resolver.resolveException(req, res, null, e);
         }
-
-        chain.doFilter(req, res);
-    }
-
-    private void writeUnauthorized(HttpServletResponse res, String message) throws IOException {
-        res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        res.setContentType("application/json;charset=UTF-8");
-
-        res.getWriter().write("""
-            {
-                "status": 401,
-                "code": "UNAUTHORIZED",
-                "message": "%s"
-            }
-            """.formatted(message));
     }
 }

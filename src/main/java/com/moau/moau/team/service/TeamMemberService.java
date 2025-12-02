@@ -1,5 +1,6 @@
 package com.moau.moau.team.service;
 
+import com.moau.moau.global.exception.BusinessException;
 import com.moau.moau.global.exception.error.CommonError;
 import com.moau.moau.global.security.SecurityUtil;
 import com.moau.moau.team.domain.*;
@@ -25,11 +26,11 @@ public class TeamMemberService {
     private TeamMember requireMemberWithRole(Long teamId, Long userId, TeamMemberRole requiredRole) {
         TeamMember member = teamMembers.findActiveMember(teamId, userId)
                 .orElseThrow(() ->
-                        new IllegalStateException(CommonError.ACCESS_DENIED.getMessage())
+                        new BusinessException(CommonError.ACCESS_DENIED)
                 );
 
         if (!member.getRole().isAtLeast(requiredRole)) {
-            throw new IllegalStateException(CommonError.ACCESS_DENIED.getMessage());
+            throw new BusinessException(CommonError.ACCESS_DENIED);
         }
         return member;
     }
@@ -40,7 +41,7 @@ public class TeamMemberService {
 
         Team team = teams.findById(teamId)
                 .orElseThrow(() ->
-                        new IllegalStateException(CommonError.TEAM_NOT_FOUND.getMessage())
+                        new BusinessException(CommonError.TEAM_NOT_FOUND)
                 );
 
         return teamMembers.findAllByTeam(team)
@@ -56,12 +57,12 @@ public class TeamMemberService {
 
         Team team = teams.findById(teamId)
                 .orElseThrow(() ->
-                        new IllegalStateException(CommonError.TEAM_NOT_FOUND.getMessage())
+                        new BusinessException(CommonError.TEAM_NOT_FOUND)
                 );
 
         User owner = users.findById(ownerUserId)
                 .orElseThrow(() ->
-                        new IllegalStateException(CommonError.USER_NOT_FOUND.getMessage())
+                        new BusinessException(CommonError.USER_NOT_FOUND)
                 );
 
         TeamMemberId id = new TeamMemberId(teamId, ownerUserId);
@@ -90,22 +91,22 @@ public class TeamMemberService {
 
         Team team = teams.findByIdAndDeletedAtIsNull(teamId)
                 .orElseThrow(() ->
-                        new IllegalStateException(CommonError.TEAM_NOT_FOUND.getMessage())
+                        new BusinessException(CommonError.TEAM_NOT_FOUND)
                 );
 
         if (team.getOwner().getId().equals(currentUserId)) {
-            throw new IllegalStateException(CommonError.TEAM_OWNER_CANNOT_LEAVE.getMessage());
+            throw new BusinessException(CommonError.TEAM_OWNER_CANNOT_LEAVE);
         }
 
         TeamMemberId id = new TeamMemberId(teamId, currentUserId);
 
         TeamMember member = teamMembers.findById(id)
                 .orElseThrow(() ->
-                        new IllegalStateException(CommonError.TEAM_MEMBER_NOT_FOUND.getMessage())
+                        new BusinessException(CommonError.TEAM_MEMBER_NOT_FOUND)
                 );
 
         if (member.getStatus() == TeamMemberStatus.LEFT) {
-            throw new IllegalStateException(CommonError.TEAM_MEMBER_ALREADY_LEFT.getMessage());
+            throw new BusinessException(CommonError.TEAM_MEMBER_ALREADY_LEFT);
         }
 
         member.setStatus(TeamMemberStatus.LEFT);
@@ -121,26 +122,26 @@ public class TeamMemberService {
 
         Team team = teams.findByIdAndDeletedAtIsNull(teamId)
                 .orElseThrow(() ->
-                        new IllegalStateException(CommonError.TEAM_NOT_FOUND.getMessage())
+                        new BusinessException(CommonError.TEAM_NOT_FOUND)
                 );
 
         if (!TeamMemberRole.ADMIN.equals(newRole) && !TeamMemberRole.MEMBER.equals(newRole)) {
-            throw new IllegalStateException(CommonError.TEAM_ROLE_INVALID.getMessage());
+            throw new BusinessException(CommonError.TEAM_ROLE_INVALID);
         }
 
         TeamMemberId targetId = new TeamMemberId(teamId, targetUserId);
 
         TeamMember target = teamMembers.findById(targetId)
                 .orElseThrow(() ->
-                        new IllegalStateException(CommonError.TEAM_MEMBER_NOT_FOUND.getMessage())
+                        new BusinessException(CommonError.TEAM_MEMBER_NOT_FOUND)
                 );
 
         if (target.getStatus() != TeamMemberStatus.ACTIVE) {
-            throw new IllegalStateException(CommonError.TEAM_MEMBER_NOT_ACTIVE.getMessage());
+            throw new BusinessException(CommonError.TEAM_MEMBER_NOT_ACTIVE);
         }
 
         if (TeamMemberRole.OWNER.equals(target.getRole())) {
-            throw new IllegalStateException(CommonError.TEAM_OWNER_ROLE_CANNOT_BE_CHANGED.getMessage());
+            throw new BusinessException(CommonError.TEAM_OWNER_ROLE_CANNOT_BE_CHANGED);
         }
 
         target.setRole(newRole);
@@ -156,22 +157,22 @@ public class TeamMemberService {
 
         Team team = teams.findByIdAndDeletedAtIsNull(teamId)
                 .orElseThrow(() ->
-                        new IllegalStateException(CommonError.TEAM_NOT_FOUND.getMessage())
+                        new BusinessException(CommonError.TEAM_NOT_FOUND)
                 );
 
         TeamMemberId targetId = new TeamMemberId(teamId, targetUserId);
 
         TeamMember target = teamMembers.findById(targetId)
                 .orElseThrow(() ->
-                        new IllegalStateException(CommonError.TEAM_MEMBER_NOT_FOUND.getMessage())
+                        new BusinessException(CommonError.TEAM_MEMBER_NOT_FOUND)
                 );
 
         if (target.getStatus() == TeamMemberStatus.LEFT) {
-            throw new IllegalStateException(CommonError.TEAM_MEMBER_ALREADY_LEFT.getMessage());
+            throw new BusinessException(CommonError.TEAM_MEMBER_ALREADY_LEFT);
         }
 
         if (TeamMemberRole.OWNER.equals(target.getRole())) {
-            throw new IllegalStateException(CommonError.TEAM_OWNER_CANNOT_BE_KICKED.getMessage());
+            throw new BusinessException(CommonError.TEAM_OWNER_CANNOT_BE_KICKED);
         }
 
         target.setStatus(TeamMemberStatus.LEFT);
@@ -187,33 +188,33 @@ public class TeamMemberService {
 
         Team team = teams.findByIdAndDeletedAtIsNull(teamId)
                 .orElseThrow(() ->
-                        new IllegalStateException(CommonError.TEAM_NOT_FOUND.getMessage())
+                        new BusinessException(CommonError.TEAM_NOT_FOUND)
                 );
 
         User currentOwner = team.getOwner();
 
         if (currentUserId.equals(newOwnerUserId)) {
-            throw new IllegalStateException(CommonError.TEAM_OWNER_TRANSFER_SELF.getMessage());
+            throw new BusinessException(CommonError.TEAM_OWNER_TRANSFER_SELF);
         }
 
         User newOwnerUser = users.findById(newOwnerUserId)
                 .orElseThrow(() ->
-                        new IllegalStateException(CommonError.USER_NOT_FOUND.getMessage())
+                        new BusinessException(CommonError.USER_NOT_FOUND)
                 );
 
         TeamMemberId newOwnerMemberId = new TeamMemberId(teamId, newOwnerUserId);
 
         TeamMember newOwnerMember = teamMembers.findById(newOwnerMemberId)
                 .orElseThrow(() ->
-                        new IllegalStateException(CommonError.TEAM_OWNER_TRANSFER_TARGET_NOT_MEMBER.getMessage())
+                        new BusinessException(CommonError.TEAM_OWNER_TRANSFER_TARGET_NOT_MEMBER)
                 );
 
         if (newOwnerMember.getStatus() != TeamMemberStatus.ACTIVE) {
-            throw new IllegalStateException(CommonError.TEAM_OWNER_TRANSFER_TARGET_NOT_ACTIVE.getMessage());
+            throw new BusinessException(CommonError.TEAM_OWNER_TRANSFER_TARGET_NOT_ACTIVE);
         }
 
         if (TeamMemberRole.OWNER.equals(newOwnerMember.getRole())) {
-            throw new IllegalStateException(CommonError.TEAM_OWNER_ALREADY.getMessage());
+            throw new BusinessException(CommonError.TEAM_OWNER_ALREADY);
         }
 
         TeamMemberId currentOwnerMemberId = new TeamMemberId(teamId, currentUserId);
