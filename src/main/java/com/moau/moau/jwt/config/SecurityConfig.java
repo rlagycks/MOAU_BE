@@ -8,20 +8,37 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.authentication.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 
 @Configuration
 public class SecurityConfig {
 
     @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtParserPort parser) {
-        return new JwtAuthenticationFilter(parser);
+    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtParserPort parser, HandlerExceptionResolver resolver) {
+        return new JwtAuthenticationFilter(parser, resolver);
+    }
+
+    @Bean
+    public AuthenticationEntryPoint authenticationEntryPoint(HandlerExceptionResolver resolver) {
+        return (request, response, authException) ->
+                resolver.resolveException(request, response, null, authException);
+    }
+
+    @Bean
+    public AccessDeniedHandler accessDeniedHandler(HandlerExceptionResolver resolver) {
+        return (request, response, accessDeniedException) ->
+                resolver.resolveException(request, response, null, accessDeniedException);
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
-            JwtAuthenticationFilter jwtFilter
+            JwtAuthenticationFilter jwtFilter,
+            AuthenticationEntryPoint authenticationEntryPoint,
+            AccessDeniedHandler accessDeniedHandler
     ) throws Exception {
 
         http
@@ -62,6 +79,12 @@ public class SecurityConfig {
 
                         // 그 외 모든 API는 인증 필요
                         .anyRequest().authenticated()
+                )
+
+                // 인증/인가 실패 시 전역 예외 처리로 위임
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler)
                 )
 
                 // JWT 필터 등록
