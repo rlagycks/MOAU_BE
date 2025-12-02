@@ -1,6 +1,7 @@
 // src/main/java/com/moau/moau/team/domain/TeamMemberFactory.java
 package com.moau.moau.team.domain;
 
+import com.moau.moau.global.exception.BusinessException;
 import com.moau.moau.global.exception.error.CommonError;
 import com.moau.moau.user.domain.User;
 
@@ -44,7 +45,7 @@ public class TeamMemberFactory {
             field.setAccessible(true);
             field.set(target, value);
         } catch (NoSuchFieldException | IllegalAccessException e) {
-            throw new IllegalStateException(CommonError.TEAM_MEMBER_FIELD_ERROR.getMessage());
+            throw new BusinessException(CommonError.TEAM_MEMBER_FIELD_ERROR, null, e);
         }
     }
 }

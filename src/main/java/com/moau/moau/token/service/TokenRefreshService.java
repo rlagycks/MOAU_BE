@@ -1,6 +1,7 @@
 // src/main/java/com/moau/moau/token/application/TokenRefreshService.java
 package com.moau.moau.token.service;
 
+import com.moau.moau.global.exception.BusinessException;
 import com.moau.moau.global.exception.error.CommonError;
 import com.moau.moau.jwt.ports.JwtIssuerPort;
 import com.moau.moau.jwt.ports.JwtParserPort;
@@ -35,10 +36,10 @@ public class TokenRefreshService {
         var parsed = jwtParser.parse(refreshTokenRaw);
 
         if (!"RT".equals(parsed.typ())) {
-            throw new IllegalStateException(CommonError.REFRESH_TOKEN_INVALID_TYPE.getMessage());
+            throw new BusinessException(CommonError.REFRESH_TOKEN_INVALID_TYPE);
         }
         if (parsed.expiresAt().isBefore(Instant.now())) {
-            throw new IllegalStateException(CommonError.REFRESH_TOKEN_EXPIRED.getMessage());
+            throw new BusinessException(CommonError.REFRESH_TOKEN_EXPIRED);
         }
 
         String jti = parsed.jti();
@@ -46,13 +47,13 @@ public class TokenRefreshService {
 
         var rt = refreshTokens.findByJtiAndRevokedAtIsNull(jti)
                 .orElseThrow(() ->
-                        new IllegalStateException(CommonError.REFRESH_TOKEN_NOT_FOUND.getMessage())
+                        new BusinessException(CommonError.REFRESH_TOKEN_NOT_FOUND)
                 );
 
         // 토큰 해시 일치 여부 확인
         byte[] incoming = sha256(refreshTokenRaw);
         if (!MessageDigest.isEqual(incoming, rt.getTokenHash())) {
-            throw new IllegalStateException(CommonError.REFRESH_TOKEN_MISMATCH.getMessage());
+            throw new BusinessException(CommonError.REFRESH_TOKEN_MISMATCH);
         }
 
         // 기존 RT 폐기
@@ -76,18 +77,18 @@ public class TokenRefreshService {
     public void revokeByRefreshToken(String refreshTokenRaw) {
         var parsed = jwtParser.parse(refreshTokenRaw);
         if (!"RT".equals(parsed.typ())) {
-            throw new IllegalStateException(CommonError.REFRESH_TOKEN_INVALID_TYPE.getMessage());
+            throw new BusinessException(CommonError.REFRESH_TOKEN_INVALID_TYPE);
         }
 
         var rt = refreshTokens.findByJtiAndRevokedAtIsNull(parsed.jti())
                 .orElseThrow(() ->
-                        new IllegalStateException(CommonError.REFRESH_TOKEN_NOT_FOUND.getMessage())
+                        new BusinessException(CommonError.REFRESH_TOKEN_NOT_FOUND)
                 );
 
         // 해시 검증
         byte[] incoming = sha256(refreshTokenRaw);
         if (!MessageDigest.isEqual(incoming, rt.getTokenHash())) {
-            throw new IllegalStateException(CommonError.REFRESH_TOKEN_MISMATCH.getMessage());
+            throw new BusinessException(CommonError.REFRESH_TOKEN_MISMATCH);
         }
 
         rt.revokeNow();
@@ -98,7 +99,7 @@ public class TokenRefreshService {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             return md.digest(raw.getBytes(java.nio.charset.StandardCharsets.UTF_8));
         } catch (Exception e) {
-            throw new IllegalStateException(CommonError.TOKEN_HASH_ERROR.getMessage());
+            throw new BusinessException(CommonError.TOKEN_HASH_ERROR, null, e);
         }
     }
 
@@ -108,4 +109,3 @@ public class TokenRefreshService {
             String refreshToken, java.time.Instant refreshTokenExpiresAt
     ) {}
 }
-

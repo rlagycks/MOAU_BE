@@ -1,5 +1,6 @@
 package com.moau.moau.team.service;
 
+import com.moau.moau.global.exception.BusinessException;
 import com.moau.moau.global.exception.error.CommonError;
 import com.moau.moau.team.domain.Team;
 import com.moau.moau.team.domain.TeamMember;
@@ -37,11 +38,11 @@ public class TeamQueryService {
 
         Team team = teams.findByIdAndDeletedAtIsNull(teamId)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(CommonError.TEAM_NOT_FOUND.getMessage())
+                        new BusinessException(CommonError.TEAM_NOT_FOUND)
                 );
 
         if (!team.getOwner().getId().equals(currentUserId)) {
-            throw new IllegalStateException(CommonError.TEAM_VIEW_FORBIDDEN.getMessage());
+            throw new BusinessException(CommonError.TEAM_VIEW_FORBIDDEN);
         }
 
         return TeamDetailResponse.from(team);
