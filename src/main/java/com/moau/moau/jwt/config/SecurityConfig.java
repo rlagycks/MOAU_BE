@@ -2,6 +2,7 @@ package com.moau.moau.jwt.config;
 
 import com.moau.moau.jwt.ports.JwtParserPort;
 import com.moau.moau.jwt.web.JwtAuthenticationFilter;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -17,18 +18,25 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 public class SecurityConfig {
 
     @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtParserPort parser, HandlerExceptionResolver resolver) {
+    public JwtAuthenticationFilter jwtAuthenticationFilter(
+            JwtParserPort parser,
+            @Qualifier("handlerExceptionResolver") HandlerExceptionResolver resolver
+    ) {
         return new JwtAuthenticationFilter(parser, resolver);
     }
 
     @Bean
-    public AuthenticationEntryPoint authenticationEntryPoint(HandlerExceptionResolver resolver) {
+    public AuthenticationEntryPoint authenticationEntryPoint(
+            @Qualifier("handlerExceptionResolver") HandlerExceptionResolver resolver
+    ) {
         return (request, response, authException) ->
                 resolver.resolveException(request, response, null, authException);
     }
 
     @Bean
-    public AccessDeniedHandler accessDeniedHandler(HandlerExceptionResolver resolver) {
+    public AccessDeniedHandler accessDeniedHandler(
+            @Qualifier("handlerExceptionResolver") HandlerExceptionResolver resolver
+    ) {
         return (request, response, accessDeniedException) ->
                 resolver.resolveException(request, response, null, accessDeniedException);
     }
