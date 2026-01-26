@@ -10,8 +10,6 @@ import com.moau.moau.global.exception.error.DuesError;
 import com.moau.moau.accounting.dues.repository.DuesCycleRepository;
 import com.moau.moau.accounting.dues.repository.DuesMemberStatusRepository;
 import com.moau.moau.global.exception.BusinessException;
-import com.moau.moau.user.domain.User;
-import com.moau.moau.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,7 +25,6 @@ public class DuesCommandService {
     private final DuesMemberStatusRepository duesMemberStatusRepository;
     private final BankingCommandService bankingCommandService;
     private final DuesQueryService duesQueryService;
-    private final UserRepository userRepository;
 
     public DuesCycleDetailDto updateMemberStatus(Long teamId, Long cycleId, Long targetUserId, DuesStatusUpdateRequestDto req) {
 
@@ -44,9 +41,8 @@ public class DuesCommandService {
             return duesQueryService.getCycleStatusById(teamId, cycleId);
         }
 
-        String userName = userRepository.findById(targetUserId).map(User::getNickname).orElse("멤버");
-
         // 4. 상태 변경 및 뱅킹 연동
+        // N+1 쿼리 방지: userName 조회 제거, userId 사용
         if (req.status() == DuesStatus.PAID) {
             memberStatus.markPaid();
 
@@ -55,7 +51,7 @@ public class DuesCommandService {
                     req.bankAccountId(),
                     memberStatus.getAmount(),
                     req.categoryId(),
-                    String.format("%s 회비 납부 (%s)", cycle.getName(), userName),
+                    String.format("%s 회비 납부 (User ID: %d)", cycle.getName(), targetUserId),
                     LocalDate.now()
             );
         } else {
@@ -66,7 +62,7 @@ public class DuesCommandService {
                     req.bankAccountId(),
                     memberStatus.getAmount(),
                     req.categoryId(),
-                    String.format("%s 회비 납부 취소 (%s)", cycle.getName(), userName),
+                    String.format("%s 회비 납부 취소 (User ID: %d)", cycle.getName(), targetUserId),
                     LocalDate.now(),
                     null
             );
