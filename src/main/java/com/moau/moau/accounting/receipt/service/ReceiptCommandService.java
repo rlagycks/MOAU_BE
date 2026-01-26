@@ -9,8 +9,6 @@ import com.moau.moau.accounting.receipt.dto.response.PresignedUrlResponseDto;
 import com.moau.moau.accounting.receipt.dto.response.ReceiptDto;
 import com.moau.moau.accounting.receipt.repository.ReceiptRepository;
 import com.moau.moau.global.security.SecurityUtil;
-import com.moau.moau.user.domain.User;
-import com.moau.moau.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -23,7 +21,6 @@ public class ReceiptCommandService {
     private final ReceiptRepository receiptRepository;
     private final StorageServicePort storageServicePort;
     private final ApplicationEventPublisher eventPublisher;
-    private final UserRepository userRepository;
 
     public PresignedUrlResponseDto createPresignedUrl(String filename) {
         return storageServicePort.createPresignedUrl(filename);
@@ -47,12 +44,10 @@ public class ReceiptCommandService {
 
         eventPublisher.publishEvent(new ReceiptCreatedEvent(savedReceipt.getId()));
 
-        String uploaderName = userRepository.findById(uploaderId)
-                .map(User::getNickname).orElse("N/A");
-
+        // N+1 쿼리 방지: 영수증 생성 응답에서 uploaderName 제거 (프론트엔드에서 현재 사용자 정보로 처리)
         return new ReceiptDto(
                 savedReceipt.getId(),
-                uploaderName,
+                null,  // uploaderName은 프론트엔드에서 현재 사용자 정보로 표시
                 savedReceipt.getImageUrl(),
                 savedReceipt.getDescription(),
                 savedReceipt.getOcrStatus().name(),
