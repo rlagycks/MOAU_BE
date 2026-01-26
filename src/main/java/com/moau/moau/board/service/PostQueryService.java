@@ -19,7 +19,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -34,9 +37,17 @@ public class PostQueryService {
     public Page<PostResponseDto> getPosts(Long currentUserId, Long teamId, Pageable pageable) {
         Page<Post> posts = postRepository.findAllByTeamIdAndDeletedAtIsNull(teamId, pageable);
 
-        // (성능 최적화를 위해 작성자 ID 수집 후 일괄 조회 가능하지만, 일단 건별 처리 로직)
+        // N+1 쿼리 방지: 익명이 아닌 게시글의 작성자 ID 수집 후 일괄 조회
+        Set<Long> authorIds = posts.stream()
+                .filter(post -> !post.isAnonymous())
+                .map(Post::getAuthorUserId)
+                .collect(Collectors.toSet());
+
+        Map<Long, String> userNicknameMap = userRepository.findAllByIdIn(authorIds).stream()
+                .collect(Collectors.toMap(User::getId, User::getNickname));
+
         return posts.map(post -> {
-            String displayName = resolveDisplayName(post.isAnonymous(), post.getAuthorUserId(), currentUserId);
+            String displayName = resolveDisplayName(post.isAnonymous(), post.getAuthorUserId(), currentUserId, userNicknameMap);
 
             // 본문 미리보기 (50자 제한)
             String preview = post.getContent().length() > 50
@@ -60,13 +71,24 @@ public class PostQueryService {
         Post post = postRepository.findByIdAndTeamIdAndDeletedAtIsNull(postId, teamId)
                 .orElseThrow(() -> new BusinessException(BoardError.POST_NOT_FOUND));
 
-        String postAuthorName = resolveDisplayName(post.isAnonymous(), post.getAuthorUserId(), currentUserId);
+        // 2. 댓글 조회
+        List<Comment> comments = commentRepository.findAllByPostIdAndDeletedAtIsNullOrderByCreatedAtAsc(postId);
+
+        // 3. N+1 쿼리 방지: 게시글 + 댓글 작성자 ID 수집 후 일괄 조회
+        Set<Long> authorIds = Stream.concat(
+                Stream.of(post).filter(p -> !p.isAnonymous()).map(Post::getAuthorUserId),
+                comments.stream().filter(c -> !c.isAnonymous()).map(Comment::getAuthorUserId)
+        ).collect(Collectors.toSet());
+
+        Map<Long, String> userNicknameMap = userRepository.findAllByIdIn(authorIds).stream()
+                .collect(Collectors.toMap(User::getId, User::getNickname));
+
+        String postAuthorName = resolveDisplayName(post.isAnonymous(), post.getAuthorUserId(), currentUserId, userNicknameMap);
         boolean isMyPost = post.getAuthorUserId().equals(currentUserId);
 
-        // 2. 댓글 조회 및 변환
-        List<Comment> comments = commentRepository.findAllByPostIdAndDeletedAtIsNullOrderByCreatedAtAsc(postId);
+        // 4. 댓글 변환
         List<CommentResponseDto> commentDtos = comments.stream().map(comment -> {
-            String commentAuthorName = resolveDisplayName(comment.isAnonymous(), comment.getAuthorUserId(), currentUserId);
+            String commentAuthorName = resolveDisplayName(comment.isAnonymous(), comment.getAuthorUserId(), currentUserId, userNicknameMap);
             boolean isMyComment = comment.getAuthorUserId().equals(currentUserId);
 
             return new CommentResponseDto(
@@ -92,7 +114,17 @@ public class PostQueryService {
         );
     }
 
-    // [Helper] 익명 여부와 본인 여부에 따른 이름 결정
+    // [Helper] 익명 여부와 본인 여부에 따른 이름 결정 (일괄 조회 버전)
+    private String resolveDisplayName(boolean isAnonymous, Long authorId, Long currentUserId, Map<Long, String> userNicknameMap) {
+        if (isAnonymous) {
+            return authorId.equals(currentUserId) ? "익명(나)" : "익명";
+        } else {
+            // 일괄 조회한 Map에서 닉네임 조회
+            return userNicknameMap.getOrDefault(authorId, "(알수없음)");
+        }
+    }
+
+    // [Helper] 익명 여부와 본인 여부에 따른 이름 결정 (단건 조회 버전 - 하위 호환성)
     private String resolveDisplayName(boolean isAnonymous, Long authorId, Long currentUserId) {
         if (isAnonymous) {
             return authorId.equals(currentUserId) ? "익명(나)" : "익명";
