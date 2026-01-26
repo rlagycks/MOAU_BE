@@ -6,13 +6,17 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import com.moau.moau.user.domain.User;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 
 @Getter
+@Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Entity
 @Table(name = "JOIN_REQUESTS") // [✅ 수정] 대문자 복수형
 public class JoinRequest extends BaseId {
@@ -37,5 +41,24 @@ public class JoinRequest extends BaseId {
     // ERD의 requested_at을 createdAt으로 사용하고 decided_at만 추가합니다.
     @Column(name = "decided_at")
     private Instant decidedAt;
+
+    // 상태 변경 메서드를 도메인 객체로 이동 (Rich Domain Model)
+    public void approve(User decider) {
+        this.status = JoinRequestStatus.APPROVED;
+        this.decidedBy = decider;
+        this.decidedAt = Instant.now();
+    }
+
+    public void reject(User decider) {
+        this.status = JoinRequestStatus.REJECTED;
+        this.decidedBy = decider;
+        this.decidedAt = Instant.now();
+    }
+
+    public void cancel(User requester) {
+        this.status = JoinRequestStatus.CANCELED;
+        this.decidedBy = requester;
+        this.decidedAt = Instant.now();
+    }
 
 }
