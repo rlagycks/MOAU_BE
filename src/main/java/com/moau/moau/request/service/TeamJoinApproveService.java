@@ -34,16 +34,8 @@ public class TeamJoinApproveService {
     @Transactional
     public void approve(Long teamId, Long requestId) {
 
-        // 1) 승인자 조회
-        Long approverUserId = SecurityUtil.getCurrentUserId();
-        User approver = users.findById(approverUserId)
-                .orElseThrow(() -> new BusinessException(CommonError.USER_NOT_FOUND));
-
-        var approverMember = teamMembers.findActiveMember(teamId, approverUserId)
-                .orElseThrow(() -> new BusinessException(CommonError.ACCESS_DENIED));
-        if (!approverMember.getRole().isAtLeast(TeamMemberRole.ADMIN)) {
-            throw new BusinessException(CommonError.ACCESS_DENIED);
-        }
+        // 1) 승인자 권한 검증
+        User approver = requireAdminPermission(teamId);
 
         // 2) JoinRequest 조회
         JoinRequest req = joinRequests.findById(requestId)
@@ -72,7 +64,7 @@ public class TeamJoinApproveService {
                 targetUser,
                 TeamMemberRole.MEMBER,
                 TeamMemberStatus.ACTIVE,
-                approverUserId
+                approver.getId()
         );
         teamMembers.save(member);
 
@@ -84,15 +76,8 @@ public class TeamJoinApproveService {
     @Transactional
     public void reject(Long teamId, Long requestId) {
 
-        Long approverUserId = SecurityUtil.getCurrentUserId();
-        User approver = users.findById(approverUserId)
-                .orElseThrow(() -> new BusinessException(CommonError.USER_NOT_FOUND));
-
-        var approverMember = teamMembers.findActiveMember(teamId, approverUserId)
-                .orElseThrow(() -> new BusinessException(CommonError.ACCESS_DENIED));
-        if (!approverMember.getRole().isAtLeast(TeamMemberRole.ADMIN)) {
-            throw new BusinessException(CommonError.ACCESS_DENIED);
-        }
+        // 1) 승인자 권한 검증
+        User approver = requireAdminPermission(teamId);
 
         JoinRequest req = joinRequests.findById(requestId)
                 .orElseThrow(() -> new BusinessException(CommonError.JOIN_REQUEST_NOT_FOUND));
@@ -108,5 +93,26 @@ public class TeamJoinApproveService {
 
         // 거절 처리
         JoinRequestFactory.reject(req, approver, Instant.now());
+    }
+
+    /**
+     * Admin 권한을 가진 사용자인지 검증하고 User 객체를 반환합니다.
+     *
+     * @param teamId 팀 ID
+     * @return 검증된 User 객체
+     * @throws BusinessException 사용자가 없거나 권한이 없는 경우
+     */
+    private User requireAdminPermission(Long teamId) {
+        Long approverUserId = SecurityUtil.getCurrentUserId();
+        User approver = users.findById(approverUserId)
+                .orElseThrow(() -> new BusinessException(CommonError.USER_NOT_FOUND));
+
+        var approverMember = teamMembers.findActiveMember(teamId, approverUserId)
+                .orElseThrow(() -> new BusinessException(CommonError.ACCESS_DENIED));
+        if (!approverMember.getRole().isAtLeast(TeamMemberRole.ADMIN)) {
+            throw new BusinessException(CommonError.ACCESS_DENIED);
+        }
+
+        return approver;
     }
 }
