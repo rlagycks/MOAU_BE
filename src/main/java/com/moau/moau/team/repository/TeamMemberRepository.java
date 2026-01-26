@@ -18,6 +18,12 @@ public interface TeamMemberRepository extends JpaRepository<TeamMember, TeamMemb
 
     List<TeamMember> findByUserId(Long userId);
 
+    /**
+     * N+1 쿼리 방지: Team과 함께 조회
+     */
+    @Query("SELECT tm FROM TeamMember tm JOIN FETCH tm.team WHERE tm.id.userId = :userId")
+    List<TeamMember> findByUserIdWithTeam(Long userId);
+
     List<TeamMember> findAllByTeam(Team team);
 
     Optional<TeamMember> findByTeamIdAndUserId(Long teamId, Long userId);

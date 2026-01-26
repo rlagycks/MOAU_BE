@@ -57,7 +57,8 @@ public class ScheduleService {
 
     // 2. 일정 상세 조회
     public ScheduleDetailResponse getScheduleDetail(Long scheduleId) {
-        Schedule schedule = scheduleRepository.findById(scheduleId)
+        // Fetch Join으로 Team과 함께 조회 (Lazy Loading 방지)
+        Schedule schedule = scheduleRepository.findByIdWithTeam(scheduleId)
                 .orElseThrow(() -> new BusinessException(ScheduleError.SCHEDULE_NOT_FOUND));
 
         validateActiveMember(schedule.getTeam().getId());
@@ -133,7 +134,8 @@ public class ScheduleService {
     public List<ScheduleResponse> getMySchedules(int year, int month) {
         Long currentUserId = SecurityUtil.getCurrentUserId();
 
-        List<TeamMember> myTeams = teamMemberRepository.findByUserId(currentUserId);
+        // N+1 쿼리 방지: Team과 함께 조회
+        List<TeamMember> myTeams = teamMemberRepository.findByUserIdWithTeam(currentUserId);
         List<Long> myTeamIds = myTeams.stream()
                 .map(teamMember -> teamMember.getTeam().getId())
                 .collect(Collectors.toList());
@@ -197,31 +199,31 @@ public class ScheduleService {
 
     // [내부 메서드 5] 시간 정규화 (생성용)
     private void normalizeScheduleTime(ScheduleCreateRequest request) {
-        ZoneId KST = ZoneId.of("Asia/Seoul");
-        LocalDate startDate = request.getStartsAt().atZone(KST).toLocalDate();
-        LocalDate endDate = request.getEndsAt().atZone(KST).toLocalDate();
-
-        if (!startDate.equals(endDate)) {
-            request.setAllDay(true);
-        }
-        if (request.isAllDay()) {
-            request.setStartsAt(startDate.atStartOfDay(KST).toInstant());
-            request.setEndsAt(endDate.atTime(LocalTime.MAX).atZone(KST).toInstant());
-        }
+        normalizeTime(request.getStartsAt(), request.getEndsAt(), request.isAllDay(),
+                      request::setAllDay, request::setStartsAt, request::setEndsAt);
     }
 
     // [내부 메서드 6] 시간 정규화 (수정용)
     private void normalizeScheduleTime(ScheduleUpdateRequest request) {
+        normalizeTime(request.getStartsAt(), request.getEndsAt(), request.isAllDay(),
+                      request::setAllDay, request::setStartsAt, request::setEndsAt);
+    }
+
+    // [내부 메서드 7] 시간 정규화 공통 로직 (중복 제거)
+    private void normalizeTime(Instant startsAt, Instant endsAt, boolean isAllDay,
+                              java.util.function.Consumer<Boolean> setAllDay,
+                              java.util.function.Consumer<Instant> setStartsAt,
+                              java.util.function.Consumer<Instant> setEndsAt) {
         ZoneId KST = ZoneId.of("Asia/Seoul");
-        LocalDate startDate = request.getStartsAt().atZone(KST).toLocalDate();
-        LocalDate endDate = request.getEndsAt().atZone(KST).toLocalDate();
+        LocalDate startDate = startsAt.atZone(KST).toLocalDate();
+        LocalDate endDate = endsAt.atZone(KST).toLocalDate();
 
         if (!startDate.equals(endDate)) {
-            request.setAllDay(true);
+            setAllDay.accept(true);
         }
-        if (request.isAllDay()) {
-            request.setStartsAt(startDate.atStartOfDay(KST).toInstant());
-            request.setEndsAt(endDate.atTime(LocalTime.MAX).atZone(KST).toInstant());
+        if (isAllDay || !startDate.equals(endDate)) {
+            setStartsAt.accept(startDate.atStartOfDay(KST).toInstant());
+            setEndsAt.accept(endDate.atTime(LocalTime.MAX).atZone(KST).toInstant());
         }
     }
 }
