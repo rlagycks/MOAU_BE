@@ -6,13 +6,10 @@ import com.moau.moau.global.exception.error.BoardError;
 import com.moau.moau.board.repository.PostRepository;
 import com.moau.moau.global.exception.BusinessException;
 import com.moau.moau.global.exception.error.CommonError;
-import com.moau.moau.team.repository.TeamRepository;
-import com.moau.moau.user.repository.UserRepository;
+import com.moau.moau.team.repository.TeamMemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
@@ -20,16 +17,12 @@ import java.time.Instant;
 public class PostCommandService {
 
     private final PostRepository postRepository;
-    private final TeamRepository teamRepository;
-    private final UserRepository userRepository;
+    private final TeamMemberRepository teamMemberRepository;
 
     public Long createPost(Long userId, Long teamId, PostRequestDto dto) {
-        if (!teamRepository.existsById(teamId)) {
-            throw new BusinessException(CommonError.TEAM_NOT_FOUND);
-        }
-        if (!userRepository.existsById(userId)) {
-            throw new BusinessException(CommonError.USER_NOT_FOUND);
-        }
+        // Team 존재 + 멤버십 확인을 한 번에 (쿼리 1개로 통합)
+        teamMemberRepository.findActiveMember(teamId, userId)
+                .orElseThrow(() -> new BusinessException(CommonError.ACCESS_DENIED));
 
         Post post = Post.builder()
                 .teamId(teamId)
