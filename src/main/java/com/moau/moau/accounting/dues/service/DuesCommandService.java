@@ -4,18 +4,22 @@ import com.moau.moau.accounting.banking.service.BankingCommandService;
 import com.moau.moau.accounting.dues.domain.DuesCycle;
 import com.moau.moau.accounting.dues.domain.DuesMemberStatus;
 import com.moau.moau.accounting.dues.domain.DuesStatus;
+import com.moau.moau.accounting.dues.domain.DuesStatusChangedEvent;
 import com.moau.moau.accounting.dues.dto.request.DuesStatusUpdateRequestDto;
 import com.moau.moau.accounting.dues.dto.response.DuesCycleDetailDto;
 import com.moau.moau.global.exception.error.DuesError;
 import com.moau.moau.accounting.dues.repository.DuesCycleRepository;
 import com.moau.moau.accounting.dues.repository.DuesMemberStatusRepository;
 import com.moau.moau.global.exception.BusinessException;
+import com.moau.moau.global.security.SecurityUtil;
 import com.moau.moau.user.domain.User;
 import com.moau.moau.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDate;
 
 @Service
@@ -28,6 +32,7 @@ public class DuesCommandService {
     private final BankingCommandService bankingCommandService;
     private final DuesQueryService duesQueryService;
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public DuesCycleDetailDto updateMemberStatus(Long teamId, Long cycleId, Long targetUserId, DuesStatusUpdateRequestDto req) {
 
@@ -46,7 +51,11 @@ public class DuesCommandService {
 
         String userName = userRepository.findById(targetUserId).map(User::getNickname).orElse("멤버");
 
-        // 4. 상태 변경 및 뱅킹 연동
+        // 4. 이전 상태 저장 (감사 추적용)
+        DuesStatus previousStatus = memberStatus.getStatus();
+        Long currentUserId = SecurityUtil.getCurrentUserId();
+
+        // 5. 상태 변경 및 뱅킹 연동
         if (req.status() == DuesStatus.PAID) {
             memberStatus.markPaid();
 
@@ -72,7 +81,19 @@ public class DuesCommandService {
             );
         }
 
-        // 5. 최신 현황 반환 (전체 리스트)
+        // 6. 이벤트 발행 (감사 추적)
+        eventPublisher.publishEvent(new DuesStatusChangedEvent(
+                cycleId,
+                targetUserId,
+                previousStatus,
+                req.status(),
+                memberStatus.getAmount(),
+                currentUserId,
+                Instant.now(),
+                cycle.getName()
+        ));
+
+        // 7. 최신 현황 반환 (전체 리스트)
         return duesQueryService.getCycleStatusById(teamId, cycleId);
     }
 }
