@@ -43,26 +43,25 @@ public class PollCommandService {
             throw new BusinessException(PollError.MULTIPLE_SELECTION_NOT_ALLOWED);
         }
 
+        // 기존 투표 취소 (Native Query로 Atomic 업데이트)
         List<PollVote> existingVotes = pollVoteRepository.findAllByPollIdAndUserId(pollId, userId);
         if (!existingVotes.isEmpty()) {
             for (PollVote vote : existingVotes) {
-                PollOption option = pollOptionRepository.findByIdWithLock(vote.getPollOption().getId())
-                        .orElseThrow(() -> new BusinessException(PollError.OPTION_NOT_FOUND));
-
-                option.decreaseVote();
+                pollOptionRepository.decrementVoteCount(vote.getPollOption().getId());
             }
             pollVoteRepository.deleteAllByPollIdAndUserId(pollId, userId);
         }
 
+        // 새 투표 등록 (Native Query로 Atomic 업데이트)
         for (Long optionId : dto.pollOptionIds()) {
-            PollOption option = pollOptionRepository.findByIdWithLock(optionId)
+            PollOption option = pollOptionRepository.findById(optionId)
                     .orElseThrow(() -> new BusinessException(PollError.OPTION_NOT_FOUND));
 
             if (!option.getPoll().getId().equals(pollId)) {
                 throw new BusinessException(PollError.INVALID_OPTION);
             }
 
-            option.increaseVote(); // 카운트 +1
+            pollOptionRepository.incrementVoteCount(optionId);
 
             PollVote newVote = PollVote.builder()
                     .poll(poll)
