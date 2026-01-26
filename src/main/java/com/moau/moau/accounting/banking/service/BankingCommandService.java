@@ -140,8 +140,9 @@ public class BankingCommandService {
     }
 
     // (공통) 잔액 업데이트 로직 분리
+    // Race Condition 방지: Pessimistic Lock으로 최신 잔액 조회
     private void updateBalance(BankAccount account, Long amountDelta) {
-        BankBalance latestBalance = bankBalanceRepository.findTopByBankAccountOrderByAsOfDesc(account)
+        BankBalance latestBalance = bankBalanceRepository.findLatestWithLock(account)
                 .orElseThrow(() -> new BusinessException(BankingError.ACCOUNT_NOT_FOUND, "계좌의 잔액 정보가 없습니다."));
 
         BankBalance updatedBalance = BankBalance.builder()
