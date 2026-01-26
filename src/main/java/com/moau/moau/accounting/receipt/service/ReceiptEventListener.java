@@ -19,6 +19,13 @@ public class ReceiptEventListener {
     public void handleReceiptCreatedEvent(ReceiptCreatedEvent event) {
         log.info("[Event] Receipt created, triggering OCR. receiptId: {}", event.receiptId());
 
-        ocrServicePort.requestOcr(event.receiptId());
+        try {
+            ocrServicePort.requestOcr(event.receiptId());
+            log.info("[Event] OCR processing completed for receiptId: {}", event.receiptId());
+        } catch (Exception e) {
+            log.error("[Event] OCR processing failed for receiptId: {}. Error: {}",
+                    event.receiptId(), e.getMessage(), e);
+            // OCR 실패 시에도 예외를 던지지 않아 트랜잭션 롤백 방지
+        }
     }
 }
