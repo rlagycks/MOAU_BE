@@ -25,7 +25,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -47,9 +49,18 @@ public class NoticeQueryService {
             throw new BusinessException(CommonError.TEAM_NOT_FOUND);
         }
 
-        return noticeRepository.findAllByTeamIdAndDeletedAtIsNull(teamId, pageable)
-                .map(notice -> {
-                    String authorName = getAuthorName(notice.getAuthorUserId());
+        Page<Notice> notices = noticeRepository.findAllByTeamIdAndDeletedAtIsNull(teamId, pageable);
+
+        // N+1 쿼리 방지: 작성자 ID 수집 후 일괄 조회
+        Set<Long> authorIds = notices.stream()
+                .map(Notice::getAuthorUserId)
+                .collect(Collectors.toSet());
+
+        Map<Long, String> userNicknameMap = userRepository.findAllByIdIn(authorIds).stream()
+                .collect(Collectors.toMap(User::getId, User::getNickname));
+
+        return notices.map(notice -> {
+                    String authorName = userNicknameMap.getOrDefault(notice.getAuthorUserId(), "(알수없음)");
                     String preview = notice.getContent().length() > 50 ?
                             notice.getContent().substring(0, 50) + "..." : notice.getContent();
 
