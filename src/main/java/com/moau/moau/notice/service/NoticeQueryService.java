@@ -15,7 +15,6 @@ import com.moau.moau.poll.domain.PollOption;
 import com.moau.moau.poll.repository.PollOptionRepository;
 import com.moau.moau.poll.repository.PollRepository;
 import com.moau.moau.poll.repository.PollVoteRepository;
-import com.moau.moau.team.repository.TeamRepository;
 import com.moau.moau.user.domain.User;
 import com.moau.moau.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -38,15 +37,10 @@ public class NoticeQueryService {
     private final PollRepository pollRepository;
     private final PollOptionRepository pollOptionRepository;
     private final PollVoteRepository pollVoteRepository;
-    private final TeamRepository teamRepository;
     private final UserRepository userRepository;
     private final StorageServicePort storageServicePort;
 
     public Page<NoticeResponseDto> getNotices(Long teamId, Pageable pageable) {
-        if (!teamRepository.existsById(teamId)) {
-            throw new BusinessException(CommonError.TEAM_NOT_FOUND);
-        }
-
         return noticeRepository.findAllByTeamIdAndDeletedAtIsNull(teamId, pageable)
                 .map(notice -> {
                     String authorName = getAuthorName(notice.getAuthorUserId());

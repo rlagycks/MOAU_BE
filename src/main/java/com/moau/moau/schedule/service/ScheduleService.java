@@ -39,9 +39,7 @@ public class ScheduleService {
 
     // 1. 팀 캘린더 조회
     public List<ScheduleResponse> getTeamSchedules(Long teamId, int year, int month) {
-        if (!teamRepository.existsById(teamId)) {
-            throw new BusinessException(CommonError.TEAM_NOT_FOUND);
-        }
+        // Team 존재 + 멤버십 확인을 한 번에 (validateActiveMember에서 처리)
         validateActiveMember(teamId);
 
         YearMonth yearMonth = YearMonth.of(year, month);

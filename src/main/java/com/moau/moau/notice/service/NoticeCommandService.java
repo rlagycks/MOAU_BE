@@ -14,7 +14,7 @@ import com.moau.moau.poll.domain.Poll;
 import com.moau.moau.poll.domain.PollOption;
 import com.moau.moau.poll.repository.PollOptionRepository;
 import com.moau.moau.poll.repository.PollRepository;
-import com.moau.moau.team.repository.TeamRepository;
+import com.moau.moau.team.repository.TeamMemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,7 +31,7 @@ public class NoticeCommandService {
     private final NoticeImageRepository noticeImageRepository;
     private final PollRepository pollRepository;
     private final PollOptionRepository pollOptionRepository;
-    private final TeamRepository teamRepository;
+    private final TeamMemberRepository teamMemberRepository;
 
     private final StorageServicePort storageServicePort;
 
@@ -40,9 +40,9 @@ public class NoticeCommandService {
     }
 
     public Long createNotice(Long userId, Long teamId, NoticeCreateRequestDto dto) {
-        if (!teamRepository.existsById(teamId)) {
-            throw new BusinessException(CommonError.TEAM_NOT_FOUND);
-        }
+        // Team 존재 + 멤버십 확인을 한 번에 (쿼리 1개로 통합)
+        teamMemberRepository.findActiveMember(teamId, userId)
+                .orElseThrow(() -> new BusinessException(CommonError.ACCESS_DENIED));
 
         boolean hasPoll = (dto.poll() != null);
         Notice notice = Notice.builder()
