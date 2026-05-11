@@ -109,11 +109,12 @@ public class NoticeQueryService {
     }
 
     private PollDto getPollDto(Long noticeId, Long currentUserId) {
-        Poll poll = pollRepository.findByNoticeId(noticeId).orElse(null);
+        // N+1 쿼리 방지: Poll과 PollOption을 함께 조회
+        Poll poll = pollRepository.findByNoticeIdWithOptions(noticeId).orElse(null);
         if (poll == null) return null;
 
-        // 1. 옵션 목록 조회
-        List<PollOption> options = pollOptionRepository.findAllByPollId(poll.getId());
+        // 1. 옵션 목록은 이미 Fetch Join으로 로드됨
+        List<PollOption> options = poll.getOptions();
 
         // 2. 내가 투표한 옵션 ID 목록 조회
         Set<Long> myVotedOptionIds = pollVoteRepository.findAllByPollIdAndUserId(poll.getId(), currentUserId)

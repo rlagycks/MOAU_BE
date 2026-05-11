@@ -9,6 +9,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -30,6 +32,9 @@ public class Poll extends BaseId {
 
     @Column(name = "deadline")
     private LocalDate deadline;
+
+    @OneToMany(mappedBy = "poll", fetch = FetchType.LAZY)
+    private List<PollOption> options = new ArrayList<>();
 
     @Builder
     public Poll(Notice notice, String title, boolean allowMultiple, boolean isAnonymous, LocalDate deadline) {
