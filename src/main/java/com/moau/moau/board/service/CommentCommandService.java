@@ -42,7 +42,8 @@ public class CommentCommandService {
     }
 
     public void deleteComment(Long userId, Long commentId) {
-        Comment comment = commentRepository.findByIdAndDeletedAtIsNull(commentId)
+        // Fetch Join으로 Post와 함께 조회 (Lazy Loading 방지)
+        Comment comment = commentRepository.findByIdWithPost(commentId)
                 .orElseThrow(() -> new BusinessException(BoardError.COMMENT_NOT_FOUND));
 
         if (!comment.getAuthorUserId().equals(userId)) {
