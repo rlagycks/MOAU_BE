@@ -8,9 +8,16 @@ import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
+
+    /**
+     * Lazy Loading 방지: Team과 함께 조회
+     */
+    @Query("SELECT s FROM Schedule s JOIN FETCH s.team WHERE s.id = :scheduleId")
+    Optional<Schedule> findByIdWithTeam(@Param("scheduleId") Long scheduleId);
 
     /**
      * [기간 일정 지원] 특정 팀의 일정 중, 조회 기간(startAt ~ endAt)과 겹치는(Overlap) 모든 일정을 조회합니다.
