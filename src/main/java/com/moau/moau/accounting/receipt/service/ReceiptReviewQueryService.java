@@ -12,6 +12,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -30,11 +34,17 @@ public class ReceiptReviewQueryService {
             reviewPage = receiptReviewRepository.findByTeamIdAndStatus(teamId, status, pageable);
         }
 
+        // N+1 쿼리 방지: requester ID 수집 후 일괄 조회
+        Set<Long> requesterIds = reviewPage.stream()
+                .map(ReceiptReview::getRequesterId)
+                .collect(Collectors.toSet());
+
+        Map<Long, String> userNicknameMap = userRepository.findAllByIdIn(requesterIds).stream()
+                .collect(Collectors.toMap(User::getId, User::getNickname));
+
         // Page<Entity> -> Page<DTO> 변환
         return reviewPage.map(review -> {
-            String requesterName = userRepository.findById(review.getRequesterId())
-                    .map(User::getNickname).orElse("N/A");
-
+            String requesterName = userNicknameMap.getOrDefault(review.getRequesterId(), "N/A");
             String imageUrl = review.getReceipt().getImageUrl();
 
             return new ReceiptReviewDto(

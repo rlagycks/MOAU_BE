@@ -2,10 +2,13 @@ package com.moau.moau.global.exception;
 
 import com.moau.moau.global.exception.error.BaseError;
 import com.moau.moau.global.exception.error.CommonError;
+import com.moau.moau.global.security.SecurityUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.env.Environment;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,8 +23,14 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 
+import java.util.Arrays;
+import java.util.UUID;
+
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class ExceptionHandlerAdvice {
+
+    private final Environment environment;
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponse> handleBusinessException(BusinessException ex, HttpServletRequest request) {
@@ -105,10 +114,45 @@ public class ExceptionHandlerAdvice {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleException(Exception ex, HttpServletRequest request) {
-        log.error("Unhandled exception at {}: {}", request.getRequestURI(), ex.getMessage(), ex);
+        String errorId = UUID.randomUUID().toString();
+
+        // 강화된 로깅 (프로덕션 디버깅용)
+        log.error("Unhandled exception [errorId={}] at {}: {}",
+                errorId, request.getRequestURI(), ex.getMessage(), ex);
+        log.error("Request details [errorId={}]: userId={}, teamId={}, params={}",
+                errorId,
+                getCurrentUserIdSafe(),
+                request.getParameter("teamId"),
+                request.getParameterMap().keySet());
+
         var error = CommonError.INTERNAL_SERVER_ERROR;
-        var response = ErrorResponse.of(HttpStatus.INTERNAL_SERVER_ERROR, error.getCode(), error.getMessage(), request.getRequestURI(), ex.getMessage());
+
+        // 프로덕션에서는 민감 정보 마스킹
+        String detail = isProductionProfile()
+                ? "Contact support with error ID: " + errorId
+                : ex.getMessage();
+
+        var response = ErrorResponse.of(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                error.getCode(),
+                error.getMessage(),
+                request.getRequestURI(),
+                detail
+        );
+
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
+
+    private Long getCurrentUserIdSafe() {
+        try {
+            return SecurityUtil.getCurrentUserId();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private boolean isProductionProfile() {
+        return Arrays.asList(environment.getActiveProfiles()).contains("prod");
     }
 
     public record FieldErrorDetail(String field, String message) {}

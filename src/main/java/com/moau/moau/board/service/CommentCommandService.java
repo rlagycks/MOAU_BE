@@ -35,22 +35,26 @@ public class CommentCommandService {
 
         commentRepository.save(comment);
 
-        post.increaseCommentCount();
+        // Race Condition 방지: Native Query로 Atomic 업데이트
+        postRepository.incrementCommentCount(postId);
 
         return comment.getId();
     }
 
     public void deleteComment(Long userId, Long commentId) {
-        Comment comment = commentRepository.findByIdAndDeletedAtIsNull(commentId)
+        // Fetch Join으로 Post와 함께 조회 (Lazy Loading 방지)
+        Comment comment = commentRepository.findByIdWithPost(commentId)
                 .orElseThrow(() -> new BusinessException(BoardError.COMMENT_NOT_FOUND));
 
         if (!comment.getAuthorUserId().equals(userId)) {
             throw new BusinessException(BoardError.UNAUTHORIZED_ACCESS);
         }
 
+        Long postId = comment.getPost().getId();
         comment.delete();
 
-        comment.getPost().decreaseCommentCount();
+        // Race Condition 방지: Native Query로 Atomic 업데이트
+        postRepository.decrementCommentCount(postId);
     }
 
 }

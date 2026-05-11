@@ -83,60 +83,40 @@ public class BankingCommandService {
     @Transactional
     public void recordExpense(Long teamId, Long bankAccountId, Long amountCents, Long categoryId,
                               String description, LocalDate transactionDate, Long reviewId) {
-
-        Long currentUserId = SecurityUtil.getCurrentUserId();
-        requireMemberWithRole(teamId, currentUserId, TeamMemberRole.ADMIN);
-
-        BankAccount account = bankAccountRepository.findByIdAndTeamId(bankAccountId, teamId)
-                .orElseThrow(() -> new BusinessException(BankingError.ACCOUNT_NOT_FOUND));
-
-        teamRepository.findByIdAndDeletedAtIsNull(teamId)
-                .orElseThrow(() -> new BusinessException(CommonError.TEAM_NOT_FOUND));
-
-        categoryRepository.findByIdAndTeamId(categoryId, teamId)
-                .orElseThrow(() -> new BusinessException(CategoryError.NOT_FOUND));
-
-        BankTransaction expense = BankTransaction.builder()
-                .bankAccount(account)
-                .txnDate(transactionDate)
-                .amountCents(amountCents * -1)
-                .description(description)
-                .build();
-        bankTransactionRepository.save(expense);
-
-        // 4. 잔액 차감
-        updateBalance(account, amountCents * -1);
+        recordTransaction(teamId, bankAccountId, amountCents * -1, categoryId, description, transactionDate);
     }
 
     @Transactional
     public void recordIncome(Long teamId, Long bankAccountId, Long amountCents, Long categoryId,
                              String description, LocalDate transactionDate) {
+        recordTransaction(teamId, bankAccountId, amountCents, categoryId, description, transactionDate);
+    }
+
+    // (공통) 거래 기록 로직 추출
+    private void recordTransaction(Long teamId, Long bankAccountId, Long signedAmountCents,
+                                    Long categoryId, String description, LocalDate transactionDate) {
 
         Long currentUserId = SecurityUtil.getCurrentUserId();
         requireMemberWithRole(teamId, currentUserId, TeamMemberRole.ADMIN);
 
-        // 1. 계좌 소유권 검증
         BankAccount account = bankAccountRepository.findByIdAndTeamId(bankAccountId, teamId)
                 .orElseThrow(() -> new BusinessException(BankingError.ACCOUNT_NOT_FOUND));
 
         teamRepository.findByIdAndDeletedAtIsNull(teamId)
                 .orElseThrow(() -> new BusinessException(CommonError.TEAM_NOT_FOUND));
 
-        // 2. 카테고리 검증
         categoryRepository.findByIdAndTeamId(categoryId, teamId)
                 .orElseThrow(() -> new BusinessException(CategoryError.NOT_FOUND));
 
-        // 3. 수입 내역 기록 (양수 저장)
-        BankTransaction income = BankTransaction.builder()
+        BankTransaction transaction = BankTransaction.builder()
                 .bankAccount(account)
                 .txnDate(transactionDate)
-                .amountCents(amountCents) // 양수
+                .amountCents(signedAmountCents)
                 .description(description)
                 .build();
-        bankTransactionRepository.save(income);
+        bankTransactionRepository.save(transaction);
 
-        // 4. 잔액 증가
-        updateBalance(account, amountCents);
+        updateBalance(account, signedAmountCents);
     }
 
     // (공통) 잔액 업데이트 로직 분리
