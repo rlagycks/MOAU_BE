@@ -97,3 +97,8 @@ config-local/
 # Davia
 .davia/
 .github/prompts/davia-documentation.md
+
+# Local AI tooling
+.claude/
+.serena/
+.specify/

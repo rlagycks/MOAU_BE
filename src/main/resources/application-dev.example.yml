@@ -1,7 +1,7 @@
 spring:
   datasource:
-    url: url
-    username: username
+    url: jdbc:mysql://127.0.0.1:3307/moau?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8
+    username: user
     password: password
     driver-class-name: com.mysql.cj.jdbc.Driver
 
@@ -14,13 +14,31 @@ spring:
         jdbc.time_zone: UTC
         format_sql: true
 
-security:
-  jwt:
-    secret: dev-jwt-secret
+  security:
+    jwt:
+      secret: dev-jwt-secret
+      access-token-expiration-msec: 900000
+      refresh-token-expiration-msec: 1209600000
 
-cloud:
-  aws:
-    region:
-      static: ap-northeast-2
-    s3:
-      bucket: moau-dev-bucket
+  cloud:
+    aws:
+      region:
+        static: ap-northeast-2
+      s3:
+        bucket: moau-dev-bucket
+
+app:
+  kakao:
+    rest-api-key: your-kakao-rest-api-key
+    token-uri: https://kauth.kakao.com/oauth/token
+    user-me-uri: https://kapi.kakao.com/v2/user/me
+    redirect-uris:
+      - your-app-scheme://oauth
+
+  naver:
+    ocr:
+      api-url: https://your-clova-ocr-endpoint
+      secret-key: your-clova-ocr-secret
+
+  openai:
+    api-key: your-openai-api-key
