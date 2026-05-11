@@ -35,7 +35,8 @@ public class CommentCommandService {
 
         commentRepository.save(comment);
 
-        post.increaseCommentCount();
+        // Race Condition 방지: Native Query로 Atomic 업데이트
+        postRepository.incrementCommentCount(postId);
 
         return comment.getId();
     }
@@ -48,9 +49,11 @@ public class CommentCommandService {
             throw new BusinessException(BoardError.UNAUTHORIZED_ACCESS);
         }
 
+        Long postId = comment.getPost().getId();
         comment.delete();
 
-        comment.getPost().decreaseCommentCount();
+        // Race Condition 방지: Native Query로 Atomic 업데이트
+        postRepository.decrementCommentCount(postId);
     }
 
 }
