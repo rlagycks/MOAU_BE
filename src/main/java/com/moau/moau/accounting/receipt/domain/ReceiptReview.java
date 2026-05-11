@@ -2,7 +2,7 @@ package com.moau.moau.accounting.receipt.domain;
 
 import com.moau.moau.global.domain.BaseId;
 import com.moau.moau.global.exception.BusinessException;
-import com.moau.moau.global.exception.error.CommonError;
+import com.moau.moau.global.exception.error.ReceiptError;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -82,7 +82,7 @@ public class ReceiptReview extends BaseId {
     // (승인 메서드)
     public void approve(Long approverId) {
         if (this.status != ReviewStatus.PENDING_APPROVAL) {
-            throw new BusinessException(CommonError.BAD_REQUEST, "Not pending approval status");
+            throw new BusinessException(ReceiptError.ALREADY_REVIEW_COMPLETED);
         }
         this.status = ReviewStatus.APPROVED;
         this.approverId = approverId;
@@ -92,7 +92,7 @@ public class ReceiptReview extends BaseId {
     // (반려 메서드)
     public void reject(Long approverId, String reason) {
         if (this.status != ReviewStatus.PENDING_APPROVAL) {
-            throw new BusinessException(CommonError.BAD_REQUEST, "Not pending approval status");
+            throw new BusinessException(ReceiptError.ALREADY_REVIEW_COMPLETED);
         }
         this.status = ReviewStatus.REJECTED;
         this.approverId = approverId;
