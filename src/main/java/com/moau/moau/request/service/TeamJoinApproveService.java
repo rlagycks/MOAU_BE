@@ -20,8 +20,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
-
 @Service
 @RequiredArgsConstructor
 public class TeamJoinApproveService {
@@ -77,7 +75,7 @@ public class TeamJoinApproveService {
         teamMembers.save(member);
 
         // 6) JoinRequest 승인 처리
-        JoinRequestFactory.approve(req, approver, Instant.now());
+        req.approve(approver);
     }
 
     /** 가입 거절 */
@@ -107,6 +105,6 @@ public class TeamJoinApproveService {
         }
 
         // 거절 처리
-        JoinRequestFactory.reject(req, approver, Instant.now());
+        req.reject(approver);
     }
 }
