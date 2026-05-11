@@ -93,3 +93,12 @@ config-local/
 *.pem
 *.key
 *.crt
+
+# Davia
+.davia/
+.github/prompts/davia-documentation.md
+
+# Local AI tooling
+.claude/
+.serena/
+.specify/
